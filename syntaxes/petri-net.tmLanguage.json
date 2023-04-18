@@ -1,0 +1,47 @@
+{
+  "name": "petri-net",
+  "scopeName": "source.petri-net",
+  "fileTypes": [
+    ".PetriNet"
+  ],
+  "patterns": [
+    {
+      "include": "#comments"
+    },
+    {
+      "name": "keyword.control.petri-net",
+      "match": "\\b(Arc|PetriNet|Place|Reset|Show|Transition|Trigger|Undo|end)\\b"
+    }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.petri-net",
+          "begin": "/\\*",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.petri-net"
+            }
+          },
+          "end": "\\*/",
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.comment.petri-net"
+            }
+          }
+        },
+        {
+          "begin": "//",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.whitespace.comment.leading.petri-net"
+            }
+          },
+          "end": "(?=$)",
+          "name": "comment.line.petri-net"
+        }
+      ]
+    }
+  }
+}

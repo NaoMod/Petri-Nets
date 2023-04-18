@@ -1,0 +1,51 @@
+PetriNet test :
+
+    Place P1 :
+        8,
+        4
+    end
+
+    Place P2 :
+        3,
+        0
+    end
+
+    Token tok1 in P1
+    Token tok2 in P1
+    Token tok3 in P1
+    Token tok4 in P1
+
+    Transition T1
+
+    Arc A1 :
+        P1 -> T1,
+        2
+    end
+
+    Arc A2 :
+        T1 -> P2,
+        1
+    end
+
+    Show P1
+    Show P2
+
+    Trigger T1
+
+    Show P1
+    Show P2
+
+    Undo test
+
+    Show P1
+    Show P2
+
+    Trigger T1
+
+    Show P1
+    Show P2
+
+    Reset test
+
+    Show P1
+    Show P2
