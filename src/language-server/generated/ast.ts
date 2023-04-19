@@ -14,7 +14,7 @@ export function isArc(item: unknown): item is Arc {
     return reflection.isInstance(item, Arc);
 }
 
-export type Event = Reset | Show | Trigger | Undo;
+export type Event = Evolution | Reset;
 
 export const Event = 'Event';
 
@@ -52,6 +52,18 @@ export function isArcTtP(item: unknown): item is ArcTtP {
     return reflection.isInstance(item, ArcTtP);
 }
 
+export interface Evolution extends AstNode {
+    readonly $container: PetriNet;
+    readonly $type: 'Evolution';
+    petrinet: Reference<PetriNet>
+}
+
+export const Evolution = 'Evolution';
+
+export function isEvolution(item: unknown): item is Evolution {
+    return reflection.isInstance(item, Evolution);
+}
+
 export interface PetriNet extends AstNode {
     readonly $type: 'PetriNet';
     arcs: Array<Arc>
@@ -67,16 +79,19 @@ export function isPetriNet(item: unknown): item is PetriNet {
     return reflection.isInstance(item, PetriNet);
 }
 
-export interface Position extends AstNode {
-    readonly $container: Token;
-    readonly $type: 'Position';
-    pos: Reference<Place> | Reference<Transition>
+export interface Place extends AstNode {
+    readonly $container: PetriNet;
+    readonly $type: 'Place';
+    allTokens?: Array<Token> | Token
+    currentTokenNumber: number
+    maxCapacity: number
+    name: string
 }
 
-export const Position = 'Position';
+export const Place = 'Place';
 
-export function isPosition(item: unknown): item is Position {
-    return reflection.isInstance(item, Position);
+export function isPlace(item: unknown): item is Place {
+    return reflection.isInstance(item, Place);
 }
 
 export interface Reset extends AstNode {
@@ -91,23 +106,10 @@ export function isReset(item: unknown): item is Reset {
     return reflection.isInstance(item, Reset);
 }
 
-export interface Show extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'Show';
-    place: Reference<Place>
-}
-
-export const Show = 'Show';
-
-export function isShow(item: unknown): item is Show {
-    return reflection.isInstance(item, Show);
-}
-
 export interface Token extends AstNode {
-    readonly $container: TolkenHolder;
+    readonly $container: Place;
     readonly $type: 'Token';
-    name: string
-    position: Position
+    position: Reference<Place>
 }
 
 export const Token = 'Token';
@@ -116,57 +118,7 @@ export function isToken(item: unknown): item is Token {
     return reflection.isInstance(item, Token);
 }
 
-export interface TolkenHolder extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'Place' | 'TolkenHolder' | 'Transition';
-    allTokens: Array<Reference<Token>> | Token
-}
-
-export const TolkenHolder = 'TolkenHolder';
-
-export function isTolkenHolder(item: unknown): item is TolkenHolder {
-    return reflection.isInstance(item, TolkenHolder);
-}
-
-export interface Trigger extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'Trigger';
-    transition: Reference<Transition>
-}
-
-export const Trigger = 'Trigger';
-
-export function isTrigger(item: unknown): item is Trigger {
-    return reflection.isInstance(item, Trigger);
-}
-
-export interface Undo extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'Undo';
-    petrinet: Reference<PetriNet>
-}
-
-export const Undo = 'Undo';
-
-export function isUndo(item: unknown): item is Undo {
-    return reflection.isInstance(item, Undo);
-}
-
-export interface Place extends TolkenHolder {
-    readonly $container: PetriNet;
-    readonly $type: 'Place';
-    currentTokenNumber: number
-    maxCapacity: number
-    name: string
-}
-
-export const Place = 'Place';
-
-export function isPlace(item: unknown): item is Place {
-    return reflection.isInstance(item, Place);
-}
-
-export interface Transition extends TolkenHolder {
+export interface Transition extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'Transition';
     name: string
@@ -183,22 +135,18 @@ export interface PetriNetAstType {
     ArcPtT: ArcPtT
     ArcTtP: ArcTtP
     Event: Event
+    Evolution: Evolution
     PetriNet: PetriNet
     Place: Place
-    Position: Position
     Reset: Reset
-    Show: Show
     Token: Token
-    TolkenHolder: TolkenHolder
     Transition: Transition
-    Trigger: Trigger
-    Undo: Undo
 }
 
 export class PetriNetAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Arc', 'ArcPtT', 'ArcTtP', 'Event', 'PetriNet', 'Place', 'Position', 'Reset', 'Show', 'Token', 'TolkenHolder', 'Transition', 'Trigger', 'Undo'];
+        return ['Arc', 'ArcPtT', 'ArcTtP', 'Event', 'Evolution', 'PetriNet', 'Place', 'Reset', 'Token', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
@@ -207,14 +155,8 @@ export class PetriNetAstReflection extends AbstractAstReflection {
             case ArcTtP: {
                 return this.isSubtype(Arc, supertype);
             }
-            case Place:
-            case Transition: {
-                return this.isSubtype(TolkenHolder, supertype);
-            }
-            case Reset:
-            case Show:
-            case Trigger:
-            case Undo: {
+            case Evolution:
+            case Reset: {
                 return this.isSubtype(Event, supertype);
             }
             default: {
@@ -228,23 +170,15 @@ export class PetriNetAstReflection extends AbstractAstReflection {
         switch (referenceId) {
             case 'ArcPtT:source':
             case 'ArcTtP:target':
-            case 'Position:pos':
-            case 'Show:place': {
+            case 'Token:position': {
                 return Place;
             }
             case 'ArcPtT:target':
-            case 'ArcTtP:source':
-            case 'Position:pos':
-            case 'Trigger:transition': {
+            case 'ArcTtP:source': {
                 return Transition;
             }
-            case 'Place:allTokens':
-            case 'TolkenHolder:allTokens':
-            case 'Transition:allTokens': {
-                return Token;
-            }
-            case 'Reset:petrinet':
-            case 'Undo:petrinet': {
+            case 'Evolution:petrinet':
+            case 'Reset:petrinet': {
                 return PetriNet;
             }
             default: {
@@ -266,9 +200,9 @@ export class PetriNetAstReflection extends AbstractAstReflection {
                     ]
                 };
             }
-            case 'TolkenHolder': {
+            case 'Place': {
                 return {
-                    name: 'TolkenHolder',
+                    name: 'Place',
                     mandatory: [
                         { name: 'allTokens', type: 'array' }
                     ]

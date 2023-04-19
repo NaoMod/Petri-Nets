@@ -4,39 +4,18 @@ entry PetriNet:
     'PetriNet' name=ID ':'
     (places+=Place|transitions+=Transition|arcs+=Arc|events+=Event)*;
 
-Event: 
-    Trigger | Undo | Reset | Show ;
-
-Trigger:
-    'Trigger' transition=[Transition:NameTrans];
-
-Undo:
-    'Undo' petrinet=[PetriNet:ID];
-
-Reset:
-    'Reset' petrinet=[PetriNet:ID];
-
-Show:
-    'Show' place=[Place:NamePlace];
-
 Token:
-    'Token' name=NameToken 'in' position=Position;
-
-Position: 
-    (pos=[Place:NamePlace])|(pos=[Transition:NameTrans]);
-
-TolkenHolder: 
-    (Transition | Place) (allTokens=Token (',' allTokens+=[Token])*)?;
+    'Token' 'in' position=[Place:NamePlace];
 
 Transition:
     'Transition' name=NameTrans ;
 
 Place: 
     'Place' name=NamePlace ':'
-        maxCapacity=INT ',' 
-        currentTokenNumber=INT 
+        'Capacity' ':'maxCapacity=INT ',' 
+        'current' 'token' 'number' ':' currentTokenNumber=INT (','
+        'every' 'token' allTokens=Token (',' allTokens+=Token)*)?
     'end';
-
 
 Arc: 
     ArcPtT | ArcTtP;
@@ -53,6 +32,15 @@ ArcTtP:
         weight=INT 
     'end';
 
+Event: 
+    Evolution | Reset ;
+
+Evolution:
+    'Evolution' petrinet=[PetriNet:ID];
+
+Reset:
+    'Reset' petrinet=[PetriNet:ID];
+
 
 // Ignore white spaces
 hidden terminal WS: /\s+/;
@@ -63,7 +51,6 @@ terminal ID: /[_a-zA-Z][\w_]*/;
 terminal NameTrans: /[_T][0-9]+/;  
 terminal NamePlace: /[_P][0-9]+/;
 terminal NameArc: /[_A][0-9]+/;
-terminal NameToken: /[_tok][0-9]+/;
 
 terminal INT returns number: /[0-9]+/;
 
