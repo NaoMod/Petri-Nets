@@ -25,7 +25,7 @@ describe('Tests the code generator', () => {
 });
 
 const input = `
-    PetriNet test :
+    PetriNet PetriNet :
 
     Place P1 :
         8,
@@ -37,10 +37,10 @@ const input = `
         0
     end
 
-    Token tok1 in P1
-    Token tok2 in P1
-    Token tok3 in P1
-    Token tok4 in P1
+    Place P3 :
+        6,
+        3
+    end
 
     Transition T1
 
@@ -54,473 +54,565 @@ const input = `
         1
     end
 
-    Show P1
-    Show P2
+    Arc A3 :
+        P3 -> T1,
+        1
+    end
 
-    Trigger T1
+    Evolution PetriNet
 
-    Show P1
-    Show P2
-
-    Undo test
-
-    Show P1
-    Show P2
-
-    Trigger T1
-
-    Show P1
-    Show P2
-
-    Reset test
-
-    Show P1
-    Show P2
+    Reset PetriNet
 
 `;
 
 const expectedOutput =
-normalizeEOL(`import java.util.*;
-
+normalizeEOL(
+    `
+import java.util.*;
 
 class PetriNet {
     private String name;
-    private List<Place> places=new ArrayList<Place>();
-    private List<Transition> transitions=new ArrayList<Transition>();
-    private List<Arc> arcs=new ArrayList<Arc>();
-    private List<Event> events=new ArrayList<Event>();
-    private boolean isSorted=false;
+    private int maxTriggers;
+    private List<Place> places = new ArrayList<Place>();
+    private List<Transition> transitions = new ArrayList<Transition>();
+    private List<Arc> arcs = new ArrayList<Arc>();
+    private List<Event> events = new ArrayList<Event>();
+    private boolean isSorted = false;
 
-    public PetriNet(String name) {
-        this.name=name;
+    public PetriNet(String name, int maxIteration) {
+        this.name = name;
+        this.maxTriggers = maxIteration;
     }
 
-    public List<Place> getPlaces() { return this.places; }
-    public List<Transition> getTransitions() { return this.transitions; }
-    public List<Arc> getArcs() { return this.arcs; }
-    public List<Event> getEvents() { return this.events; }
-    public boolean isSorted() { return this.isSorted; }
+    // Getters
+    public List<Place> getPlaces() {
+        return this.places;
+    }
 
-    public void addPlace(Place place) { this.places.add(place); }
-    public void addTransition(Transition transition) { this.transitions.add(transition); }
-    public void addArc(Arc arc) { this.arcs.add(arc); }
-    public void addEvent(Event event) { this.events.add(event); }
+    public List<Transition> getTransitions() {
+        return this.transitions;
+    }
 
-    public void removeEvent(Event event) { this.events.remove(event); }
-    public void setSorted(boolean res) { this.isSorted=res; }
+    public List<Arc> getArcs() {
+        return this.arcs;
+    }
 
+    public List<Event> getEvents() {
+        return this.events;
+    }
+
+    public int maxTriggers() {
+        return this.maxTriggers;
+    }
+
+    public boolean isSorted() {
+        return this.isSorted;
+    }
+
+    // Adders
+    public void addPlace(Place place) {
+        this.places.add(place);
+    }
+
+    public void addTransition(Transition transition) {
+        this.transitions.add(transition);
+    }
+
+    public void addArc(Arc arc) {
+        this.arcs.add(arc);
+    }
+
+    public void addEvent(Event event) {
+        this.events.add(event);
+    }
+
+    // Removers
+    public void removeEvent(Event event) {
+        this.events.remove(event);
+    }
+
+    /**
+     * Changes the isSorted variable to val
+     * 
+     * @param val the value to set isSorted to
+     */
+    public void setSorted(boolean val) {
+        this.isSorted = val;
+    }
+
+    /**
+     * Sorts arcs, places to transitions arcs first
+     */
     public void sortArc() {
         Collections.sort(this.arcs, new ArcComparator());
-        this.isSorted=true;
+        this.isSorted = true;
     }
 
-    public static void main(String[] args) { 
-        PetriNet petrinet = new PetriNet("test");
+    /**
+     * Verifies that a given transition is doable
+     */
+    public boolean transitionDoAble(Transition transition) {
+        boolean res = true;
+        for (Arc arc : this.getArcs()) {
+            if ((arc.getSourceP() != null) && (arc.getSourceP().getCurrentTokenNumber() < arc.getWeight()))
+                res = false;
+        }
+        transition.setDoable(res);
+        return res;
+    }
 
-        Place p1 = new Place(petrinet, "P1", 8);
-        Place p2 = new Place(petrinet, "P2", 3);
+    /**
+     * Verifies wether a transition of the petrinet can still be triggered
+     * 
+     * @return true if there is a triggerable transition
+     */
+    public boolean canEvolve() {
+        boolean res = false;
+        for (Transition transition : this.getTransitions()) {
+            if (transitionDoAble(transition))
+                res = true;
+        }
+        return res;
+    }
 
-        new Token(petrinet, "tok1", p1);
-        new Token(petrinet, "tok2", p1);
-        new Token(petrinet, "tok3", p1);
-        new Token(petrinet, "tok4", p1);
+    public static void main(String[] args) {
+        PetriNet PetriNet = new PetriNet("PetriNet", 300);
 
-        Transition t1 = new Transition(petrinet, "T1");
+        Place P1 = new Place(PetriNet, "P1", 8, 4);
+        Place P2 = new Place(PetriNet, "P2", 3, 0);
+        Place P3 = new Place(PetriNet, "P3", 6, 3);
 
-        new ArcPtT(petrinet, "A1", p1, t1, 2);
-        new ArcTtP(petrinet, "A2", t1, p2, 1);
+        Transition T1 = new Transition(PetriNet, "T1");
 
-        petrinet.sortArc();
+        new ArcPtT(PetriNet, "A1", P1, T1, 2);
+        new ArcTtP(PetriNet, "A2", T1, P2, 1);
+        new ArcPtT(PetriNet, "A3", P3, T1, 1);
 
-        System.out.println("1 : Base");
-        new Show(petrinet, p1);
-        new Show(petrinet, p2);
-        System.out.println("events : "+petrinet.getEvents());        
-        System.out.println("    Tokens in place p1"+p1.getAllTokens());
-        System.out.println("    Tokens in transition t1"+t1.getAllTokens());
-        System.out.println("    Tokens in place p2"+p2.getAllTokens());
+        PetriNet.sortArc();
 
-        System.out.println("------------------------------------------------------------------------");
+        new Evolution(PetriNet);
 
-        new Trigger(petrinet, t1);
-        System.out.println("2 : Trigger");
-        new Show(petrinet, p1);
-        new Show(petrinet, p2);
-        System.out.println("events : "+petrinet.getEvents());
-        System.out.println("    Tokens in place p1"+p1.getAllTokens());
-        System.out.println("    Tokens in transition t1"+t1.getAllTokens());
-        System.out.println("    Tokens in place p2"+p2.getAllTokens());
+        new Reset(PetriNet);
 
-        System.out.println("------------------------------------------------------------------------");
-
-        new Undo(petrinet);
-        System.out.println("3 : Undo");
-        new Show(petrinet, p1);
-        new Show(petrinet, p2);
-        System.out.println("events : "+petrinet.getEvents());
-        System.out.println("    Tokens in place p1"+p1.getAllTokens());
-        System.out.println("    Tokens in transition t1"+t1.getAllTokens());
-        System.out.println("    Tokens in place p2"+p2.getAllTokens());
-
-        System.out.println("------------------------------------------------------------------------");
-
-        new Trigger(petrinet, t1);
-        System.out.println("4 : Trigger");
-        new Show(petrinet, p1);
-        new Show(petrinet, p2);
-        System.out.println("events : "+petrinet.getEvents());
-        System.out.println("    Tokens in place p1"+p1.getAllTokens());
-        System.out.println("    Tokens in transition t1"+t1.getAllTokens());
-        System.out.println("    Tokens in place p2"+p2.getAllTokens());
-
-        System.out.println("------------------------------------------------------------------------");
-        
-        new Reset(petrinet);
-        System.out.println("5 : Reset");
-        new Show(petrinet, p1);
-        new Show(petrinet, p2);
-        System.out.println("events : "+petrinet.getEvents());
-        System.out.println("    Tokens in place p1"+p1.getAllTokens());
-        System.out.println("    Tokens in transition t1"+t1.getAllTokens());
-        System.out.println("    Tokens in place p2"+p2.getAllTokens());
-
-        System.out.println("------------------------------------------------------------------------");
     }
 }
 
+class Token {
+    private PetriNet petrinet;
+    private Place position;
+    private String source;
 
+    public Token(PetriNet petrinet, Place position) {
+        this.petrinet = petrinet;
+        this.position = position;
+        this.source = position.getName();
+    }
 
+    public Token(PetriNet petrinet, Place position, Transition source) {
+        this.petrinet = petrinet;
+        if (position != null)
+            this.set(position);
+        this.source = source.getName();
+    }
 
-    class TokenComparator implements java.util.Comparator<Token> {
-        public int compare(Token a, Token b) {
-            return a.getCounter() - b.getCounter();
+    public Token(PetriNet petrinet, Transition transition) {
+        this.petrinet = petrinet;
+        this.position = null;
+        this.source = transition.getName();
+    }
+
+    public String getSource() {
+        return this.source;
+    }
+
+    public void set(Place pos) {
+        this.position = pos;
+        this.position.basicSet(this);
+        this.source = pos.getName();
+    }
+
+    public void unSet() {
+        this.position.basicUnSet(this);
+        this.position = null;
+    }
+}
+
+class Place {
+    private PetriNet petrinet;
+    private String name;
+    private int maxCapacity;
+    private int currentTokenNumber;
+    private List<Token> everyTokens = new ArrayList<Token>();
+
+    public Place(PetriNet petrinet, String name, int maxCapacity) {
+        this.petrinet = petrinet;
+        this.name = name;
+        this.maxCapacity = maxCapacity;
+        this.currentTokenNumber = 0;
+        this.petrinet.addPlace(this);
+    }
+
+    public Place(PetriNet petrinet, String name, int maxCapacity, int currentTokenNumber)
+            throws IllegalArgumentException {
+        this.petrinet = petrinet;
+        this.name = name;
+        if (currentTokenNumber > maxCapacity)
+            throw new IllegalArgumentException("Too many tokens in place.");
+        this.maxCapacity = maxCapacity;
+        this.currentTokenNumber = currentTokenNumber;
+        this.addMultipleTokens(null, currentTokenNumber);
+        this.petrinet.addPlace(this);
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public int getMaxCapacity() {
+        return this.maxCapacity;
+    }
+
+    public int getCurrentTokenNumber() {
+        return this.currentTokenNumber;
+    }
+
+    public List<Token> getEveryTokens() {
+        return this.everyTokens;
+    }
+
+    public void removeToken(Token token) {
+        if ((this.currentTokenNumber == 0) || (!this.everyTokens.contains(token))) {
+            return;
+        } else {
+            token.unSet();
         }
     }
 
-    class Token {
-        public PetriNet petrinet;
-        private String name;
-        private TokenHolder position;
-        private int counter;
-
-        public Token(PetriNet petrinet, String name, TokenHolder position) {
-            this.petrinet = petrinet;
-            this.name = name;
-            if(position!=null) this.set(position);
-            this.counter = 0;
+    public void removeMultipleTokens(int n) {
+        for (int i = n - 1; i >= 0; i--) {
+            this.everyTokens.get(i).unSet();
         }
-
-        public int getCounter() { return this.counter; }
-
-        public void set(TokenHolder pos) {
-            this.position = pos;
-            this.position.basicSet(this);
-            this.counter++;
-        }
-
-        public void unSet() {
-            this.position.basicUnSet(this);
-            this.position=null;
-        } 
     }
 
-
-    abstract class TokenHolder {
-        public PetriNet petrinet;
-        protected String name;
-        protected int nbTokenMax;
-        protected int currentTokenNumber;
-        protected List<Token> allTokens = new ArrayList<Token>();
-
-        protected TokenHolder(PetriNet petrinet, String name, int maxCapacity) {
-            this.petrinet=petrinet;
-            this.name=name;
-            this.nbTokenMax=maxCapacity;
-            this.currentTokenNumber=0;
+    public void addToken(Token token) {
+        if (this.currentTokenNumber == this.maxCapacity) {
+            return;
+        } else {
+            token.set(this);
         }
+    }
 
-        protected TokenHolder(PetriNet petrinet, String name, int maxCapacity, List<Token> tokens) throws IllegalArgumentException {
-            if(tokens.size()>maxCapacity) throw new IllegalArgumentException("Too many tokens in place.");
-            this.petrinet=petrinet;
-            this.name=name;
-            this.nbTokenMax=maxCapacity;
-            this.allTokens=tokens;
-            this.currentTokenNumber=this.allTokens.size();
-        }
-
-        public String getName() { return this.name; }
-        public int getMaxCapacity() { return this.nbTokenMax; }
-        public int getCurrentTokenNumber() { return this.currentTokenNumber; }
-        public List<Token> getAllTokens() { return this.allTokens; }
-
-        public void removeToken(Token token) {
-            if((this.currentTokenNumber==0)||(!this.allTokens.contains(token))) {
-                return;
-            } else {
-                token.unSet();
+    public void addMultipleTokens(Transition transition, int n) {
+        if (transition == null) {
+            for (int i = 0; i < n; i++) {
+                addToken(new Token(petrinet, this));
             }
+            return;
         }
+        for (int i = 0; i < n; i++) {
+            addToken(new Token(petrinet, transition));
+        }
+    }
 
-        public void removeMultipleTokens(List<Token> tokens) {
-            for(Token tok : tokens) {
-                removeToken(tok);
+    public void basicSet(Token token) {
+        this.everyTokens.add(token);
+        this.currentTokenNumber = everyTokens.size();
+    }
+
+    public void basicUnSet(Token token) {
+        this.everyTokens.remove(token);
+        this.currentTokenNumber = everyTokens.size();
+    }
+}
+
+class Transition {
+    private PetriNet petrinet;
+    private boolean doable = false;
+    private String name;
+
+    public Transition(PetriNet petrinet, String name) {
+        this.petrinet = petrinet;
+        this.name = name;
+        this.petrinet.addTransition(this);
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public boolean getDoable() {
+        return this.doable;
+    }
+
+    public void setDoable(boolean val) {
+        this.doable = val;
+    }
+}
+
+class ArcComparator implements java.util.Comparator<Arc> {
+    public int compare(Arc a, Arc b) {
+        if (a.getSourceP() != null) {
+            if (b.getSourceP() != null) {
+                return 0;
             }
+            return -1;
         }
+        return 1;
+    }
+}
 
-        public void addToken(Token token) {
-            if(this.currentTokenNumber==this.nbTokenMax) {
-                return;
-            } else {
-                token.set(this);
-            }
-        }
+abstract class Arc {
+    protected PetriNet petrinet;
+    protected String name;
+    protected int weight;
 
-        public void addMultipleTokens(List<Token> tokens) {
-            for(Token tok : tokens) {
-                addToken(tok);
-            }
-        }
-
-        public void basicSet(Token token) { 
-            this.allTokens.add(token); 
-            this.currentTokenNumber++;
-        }
-
-        public void basicUnSet(Token token) {
-            this.allTokens.remove(token);
-            this.currentTokenNumber--;
-        }
+    protected Arc(PetriNet petrinet, String name, int weight) throws IllegalArgumentException {
+        this.petrinet = petrinet;
+        this.name = name;
+        if (weight < 0)
+            throw new IllegalArgumentException("Weight must be positive");
+        this.weight = weight;
+        this.petrinet.setSorted(false);
+        this.petrinet.addArc(this);
     }
 
-    class Place extends TokenHolder {
-        
-        public Place(PetriNet petrinet, String name, int maxCapacity) throws IllegalArgumentException {
-            super(petrinet, name, maxCapacity);
-            this.petrinet.addPlace(this);
-        }
+    public abstract Place getSourceP();
 
-        public Place(PetriNet petrinet, String name, int maxCapacity, List<Token> tokens) throws IllegalArgumentException {
-            super(petrinet, name, maxCapacity, tokens);
-            this.petrinet.addPlace(this);
-        }
+    public abstract Transition getSourceT();
+
+    public abstract Place getTargetP();
+
+    public abstract Transition getTargetT();
+
+    public int getWeight() {
+        return this.weight;
+    }
+}
+
+class ArcPtT extends Arc {
+    private Place source;
+    private Transition target;
+
+    public ArcPtT(PetriNet petrinet, String name, Place source, Transition target, int weight)
+            throws IllegalArgumentException {
+        super(petrinet, name, weight);
+        this.source = source;
+        this.target = target;
     }
 
-    class Transition extends TokenHolder {
-        public Transition(PetriNet petrinet, String name) throws IllegalArgumentException {
-            super(petrinet, name, -1);
-            this.petrinet.addTransition(this);
-        }
+    // Getters
+    public Place getSourceP() {
+        return this.source;
     }
 
-    class ArcComparator implements java.util.Comparator<Arc> {
-        public int compare(Arc a, Arc b) {
-            if(a.getSource() instanceof Place) {
-                if(b.getSource() instanceof Place) {
-                    return 0;
-                }
-                return -1;
-            }
-            return 1;
-        }
+    public Transition getSourceT() {
+        return null;
     }
 
-    abstract class Arc {
-        public PetriNet petrinet;
-        protected String name;
-        protected int weight;
-        protected TokenHolder source;
-        protected TokenHolder target;
-
-        protected Arc(PetriNet petrinet, String name,TokenHolder source, TokenHolder target, int weight) throws IllegalArgumentException {
-            this.petrinet = petrinet;
-            this.name = name;
-            this.source = source;
-            this.target = target;
-            if(weight<0) throw new IllegalArgumentException("Weight must be positive");
-            this.weight = weight;
-            this.petrinet.setSorted(false);
-            this.petrinet.addArc(this);
-        }
-
-        abstract public TokenHolder getSource();
-        abstract public TokenHolder getTarget();
-        abstract public int getWeight();
+    public Place getTargetP() {
+        return null;
     }
 
+    public Transition getTargetT() {
+        return this.target;
+    }
+}
 
-    class ArcPtT extends Arc {
-        public ArcPtT(PetriNet petrinet, String name, Place source, Transition target, int weight) throws IllegalArgumentException{
-            super(petrinet, name, source, target, weight);
-        }
+class ArcTtP extends Arc {
+    private Transition source;
+    private Place target;
 
-        public TokenHolder getSource() { return this.source; }
-        public TokenHolder getTarget() { return this.target; }
-        public int getWeight() { return this.weight; }
+    public ArcTtP(PetriNet petrinet, String name, Transition source, Place target, int weight)
+            throws IllegalArgumentException {
+        super(petrinet, name, weight);
+        this.source = source;
+        this.target = target;
     }
 
-
-    class ArcTtP extends Arc {
-        public ArcTtP(PetriNet petrinet, String name, Transition source, Place target, int weight) throws IllegalArgumentException {
-            super(petrinet, name, source, target, weight);
-        }
-
-        public TokenHolder getSource() { return this.source; }
-        public TokenHolder getTarget() { return this.target; }
-        public int getWeight() { return this.weight; }
+    // Getters
+    public Place getSourceP() {
+        return null;
     }
 
-    
-
-    abstract class Event {
-        protected PetriNet petrinet;
-
-        Event(PetriNet petrinet) {
-            this.petrinet = petrinet;
-            if(!this.petrinet.isSorted()) this.petrinet.sortArc();
-        }
-
-
-        public Token chooseToken(TokenHolder tokenHolder) {
-            Token returnedToken = tokenHolder.getAllTokens().get(0);
-            for(Token tok : tokenHolder.getAllTokens()) {
-                if(returnedToken.getCounter()>tok.getCounter()) returnedToken=tok;
-            }
-            return returnedToken;
-        }
-
-        public List<Token> chooseTokens(TokenHolder tokenHolder, int n) {
-            List<Token> allReturnedTokens = new ArrayList<Token>();
-            List<Token> allTokens = tokenHolder.getAllTokens();
-            if(allTokens.size()<n) {
-                for(int i=allTokens.size()-1 ; i<n ; i++) {
-                    allReturnedTokens.add(new Token(this.petrinet, "tokAutomatic", tokenHolder));
-                }
-            }
-            for(int i=0 ; i<n ; i++) {
-                allReturnedTokens.add(allTokens.get(i));
-            }
-            Collections.sort(allReturnedTokens, new TokenComparator());
-            return allReturnedTokens;
-        }
-
-        abstract public Transition getTransition();
+    public Transition getSourceT() {
+        return this.source;
     }
 
-    class Undo extends Event {
-        public Undo(PetriNet petrinet, Transition transition) {
-            super(petrinet);
-            for(int i=petrinet.getEvents().size()-1 ; i>=0 ; i--) {
-		        if(petrinet.getEvents().get(i).getTransition().equals(transition)) {
-		        	if(UndoIt(petrinet.getEvents().get(i).getTransition())) petrinet.removeEvent(petrinet.getEvents().get(i));
-		        }
-	        }
-            this.petrinet.addEvent(this);
-        }
-
-        public Undo(PetriNet petrinet) {
-            super(petrinet);
-            for(int i=petrinet.getEvents().size()-1 ; i>=0 ; i--) {
-		        if(petrinet.getEvents().get(i) instanceof Trigger) {
-		        	if(UndoIt(petrinet.getEvents().get(i).getTransition())) petrinet.removeEvent(petrinet.getEvents().get(i));
-                    i=-1;
-		        }
-	        }
-        }
-
-        private boolean UndoIt(Transition transition) {
-	        for(int i=petrinet.getArcs().size()-1 ; i>=0 ; i--) {
-                List<Token> tokens = chooseTokens(petrinet.getArcs().get(i).getTarget(), petrinet.getArcs().get(i).getWeight());
-                petrinet.getArcs().get(i).getTarget().removeMultipleTokens(tokens);
-                petrinet.getArcs().get(i).getSource().addMultipleTokens(tokens);
-	        }
-	        return true;
-        }
-    
-        public Transition getTransition() {return new Transition(petrinet, "Aucune transition");}
+    public Place getTargetP() {
+        return this.target;
     }
 
+    public Transition getTargetT() {
+        return null;
+    }
+}
 
-    class Trigger extends Event {
-        private Transition transition;
+abstract class Event {
+    protected PetriNet petrinet;
 
-        public Trigger(PetriNet petrinet, Transition transition) {
-            super(petrinet);
-            if(TriggerIt(transition)) this.transition=transition;
-            this.petrinet.addEvent(this);
+    Event(PetriNet petrinet) {
+        this.petrinet = petrinet;
+        if (!this.petrinet.isSorted())
+            this.petrinet.sortArc();
+    }
+
+    abstract public List<Trigger> getEveryTriggers();
+
+    public abstract void removeTrigger(Trigger trigger);
+}
+
+class Evolution extends Event {
+    List<Trigger> everyTriggers = new ArrayList<Trigger>();
+
+    public Evolution(PetriNet petrinet) {
+        super(petrinet);
+        this.petrinet.addEvent(this);
+        ContinueEvolving(EvolveIt(1));
+    }
+
+    /**
+     * Will continue to trigger transitions until there are no doable transitions or
+     * that the max iteration is reached
+     * 
+     * @param i is the number of times the petri net has been evolving
+     */
+    private int EvolveIt(int i) {
+        for (Transition transition : this.petrinet.getTransitions()) {
+            if (petrinet.transitionDoAble(transition))
+                this.everyTriggers.add(new Trigger(this.petrinet, transition));
         }
+        return i + 1;
+    }
 
-        private boolean TriggerIt(Transition transition) {
-            for(int i=0 ; i<petrinet.getArcs().size() ; i++) {
+    /**
+     * Verifies that the petri net can evolve
+     * 
+     * @param i is the number of times the petri net has been evolving
+     */
+    private void ContinueEvolving(int i) {
+        if ((petrinet.canEvolve()) || (i < petrinet.maxTriggers()))
+            EvolveIt(i);
+    }
 
-                // Arc Place to Transition
-                if(petrinet.getArcs().get(i).getTarget().equals(transition)) {
-                    if((petrinet.getArcs().get(i).getSource().getCurrentTokenNumber()-petrinet.getArcs().get(i).getWeight())<0){
-                        return false;
+    public List<Trigger> getEveryTriggers() {
+        return this.everyTriggers;
+    }
+
+    public void removeTrigger(Trigger trigger) {
+        this.everyTriggers.remove(trigger);
+    }
+}
+
+class Reset extends Event {
+    public Reset(PetriNet petrinet) {
+        super(petrinet);
+        ContinueResetting(petrinet.getEvents().size());
+        this.petrinet.addEvent(this);
+    }
+
+    /**
+     * Will continue
+     * 
+     * @param n
+     */
+    private void ContinueResetting(int sizeEvents) {
+        if (sizeEvents > 0) {
+            if (petrinet.getEvents().get(sizeEvents - 1) instanceof Evolution) {
+                int currentEvent = sizeEvents - 1;
+                while (petrinet.getEvents().get(currentEvent).getEveryTriggers().size() != 0) {
+                    if (ResetIt(petrinet.getEvents().get(currentEvent).getEveryTriggers().get(0).getTransition())) {
+                        petrinet.getEvents().get(currentEvent)
+                                .removeTrigger(petrinet.getEvents().get(currentEvent).getEveryTriggers().get(0));
                     }
-                    List<Token> tokens = chooseTokens(petrinet.getArcs().get(i).getSource(), petrinet.getArcs().get(i).getWeight());
-                    petrinet.getArcs().get(i).getSource().removeMultipleTokens(tokens);
-                    petrinet.getArcs().get(i).getTarget().addMultipleTokens(tokens);
                 }
-
-                // Arc Transition to Place
-                if(petrinet.getArcs().get(i).getSource().equals(transition)) {
-                    int cTok = petrinet.getArcs().get(i).getTarget().getCurrentTokenNumber();
-                    int wTrans = petrinet.getArcs().get(i).getWeight();
-                    if((cTok+wTrans)>(petrinet.getArcs().get(i).getTarget().getMaxCapacity())){
-                        return false;
-                    }
-                    List<Token> tokens = chooseTokens(petrinet.getArcs().get(i).getSource(), petrinet.getArcs().get(i).getWeight());
-                    petrinet.getArcs().get(i).getSource().removeMultipleTokens(tokens);
-                    petrinet.getArcs().get(i).getTarget().addMultipleTokens(tokens);
-                } 
+                petrinet.removeEvent(petrinet.getEvents().get(currentEvent));
             }
-            return true;
+            ContinueResetting(petrinet.getEvents().size());
         }
-
-        public Transition getTransition() { return this.transition; }
     }
 
+    /**
+     * Will nullify a trigger by "triggering" the transition in the other way
+     * 
+     * @param transition is the transition to reset
+     * @return wether the cancel was possible
+     */
+    private boolean ResetIt(Transition transition) {
+        for (int i = petrinet.getArcs().size() - 1; i >= 0; i--) {
 
-    class Reset extends Event {
-        public Reset(PetriNet petrinet) {
-            super(petrinet);
-            for(int i=petrinet.getEvents().size()-1 ; i>=0 ; i--) {
-		        if(petrinet.getEvents().get(i) instanceof Trigger) {
-		        	if(ResetIt(petrinet.getEvents().get(i).getTransition())) petrinet.removeEvent(petrinet.getEvents().get(i));
-		        }
-	        }
-            this.petrinet.addEvent(this);
-        }
+            // Arc Place to Transition
+            if ((petrinet.getArcs().get(i).getTargetT() != null)
+                    && (petrinet.getArcs().get(i).getTargetT().equals(transition))) {
+                petrinet.getArcs().get(i).getSourceP().addMultipleTokens(transition,
+                        petrinet.getArcs().get(i).getWeight());
+            }
 
-        private boolean ResetIt(Transition transition) {
-	        for(int i=petrinet.getArcs().size()-1 ; i>=0 ; i--) {
-                List<Token> tokens = chooseTokens(petrinet.getArcs().get(i).getTarget(), petrinet.getArcs().get(i).getWeight());
-                petrinet.getArcs().get(i).getTarget().removeMultipleTokens(tokens);
-                petrinet.getArcs().get(i).getSource().addMultipleTokens(tokens);
-	        }
-	        return true;
+            // Arc Transition to Places
+            if ((petrinet.getArcs().get(i).getSourceT() != null)
+                    && (petrinet.getArcs().get(i).getSourceT().equals(transition))) {
+                petrinet.getArcs().get(i).getTargetP().removeMultipleTokens(petrinet.getArcs().get(i).getWeight());
+            }
         }
-    
-        public Transition getTransition() {return new Transition(petrinet, "Aucune transition");}
+        return true;
     }
 
-
-    class Show extends Event {
-        private Place place;
-
-        public Show(PetriNet petrinet, Place place) {
-            super(petrinet);
-            this.place = place;
-            ShowIt(this.place);
-        }
-
-        private void ShowIt(Place place) {
-            System.out.println("Place "+place.getName()+" :");
-            System.out.println("    max capacity : "+place.getMaxCapacity());
-            System.out.println("    Number of Token contained : "+place.getCurrentTokenNumber());
-        }
-
-        public Transition getTransition() {return new Transition(petrinet, "Aucune transition");}
-
+    public List<Trigger> getEveryTriggers() {
+        return null;
     }
+
+    public void removeTrigger(Trigger trigger) {
+    }
+}
+
+class Trigger {
+    private PetriNet petrinet;
+    private Transition transition;
+
+    public Trigger(PetriNet petrinet, Transition transition) {
+        this.petrinet = petrinet;
+        if (TriggerIt(transition))
+            this.transition = transition;
+    }
+
+    /**
+     * Will trigger a transition, this means that every arc having this transition
+     * either as a source or a target will be activated. As a consequence, tokens
+     * will be deleted or created in corresponding places
+     * 
+     * @param transition is the transition to trigger
+     * @return wether the trigger was possible or not
+     */
+    private boolean TriggerIt(Transition transition) {
+        for (int i = 0; i < petrinet.getArcs().size(); i++) {
+
+            // Arc Place to Transition
+            if ((petrinet.getArcs().get(i).getTargetT() != null)
+                    && (petrinet.getArcs().get(i).getTargetT().equals(transition))) {
+                if ((petrinet.getArcs().get(i).getSourceP().getCurrentTokenNumber()
+                        - petrinet.getArcs().get(i).getWeight()) < 0) {
+                    return false;
+                }
+                petrinet.getArcs().get(i).getSourceP().removeMultipleTokens(petrinet.getArcs().get(i).getWeight());
+            }
+
+            // Arc Transition to Place
+            if ((petrinet.getArcs().get(i).getSourceT() != null)
+                    && (petrinet.getArcs().get(i).getSourceT().equals(transition))) {
+                int cTok = petrinet.getArcs().get(i).getTargetP().getCurrentTokenNumber();
+                int wTrans = petrinet.getArcs().get(i).getWeight();
+                if ((cTok + wTrans) > (petrinet.getArcs().get(i).getTargetP().getMaxCapacity())) {
+                    return false;
+                }
+                petrinet.getArcs().get(i).getTargetP().addMultipleTokens(transition,
+                        petrinet.getArcs().get(i).getWeight());
+            }
+        }
+        return true;
+    }
+
+    public Transition getTransition() {
+        return this.transition;
+    }
+}
+
 `);

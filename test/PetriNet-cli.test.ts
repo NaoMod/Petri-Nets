@@ -13,7 +13,7 @@ describe('Test the petrinet CLI', () => {
         expect(result.code).toBe(0);
 
         fileName = fileName.replace(/\..*$/, '').replace(/[.-]/g, '');
-        fullPath = path.join(destination, `${path.basename(fileName)}.cpp`);
+        fullPath = path.join(destination, `${path.basename(fileName)}.java`);
         const generatedDirExists = fs.existsSync(fullPath);
         expect(generatedDirExists).toBe(true);
     });
