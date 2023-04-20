@@ -131,7 +131,6 @@ export function generateMainClass(ctx: GeneratorContext): Generated {
     }
 
     ${generateMainMethod(ctx)}
-
     `;
 }
 
@@ -139,7 +138,7 @@ export function generateMainClass(ctx: GeneratorContext): Generated {
 export function generateMainMethod(ctx: GeneratorContext): Generated {
     return toNode`
     public static void main(String[] args) { 
-        PetriNet ${ctx.petrinet.name} = new ${ctx.petrinet.name}("${ctx.petrinet.name}", 300);
+        PetriNet ${ctx.petrinet.name} = new PetriNet("${ctx.petrinet.name}", 300);
 
         ${joinWithExtraNL(ctx.petrinet.places, place => generatePlaceDeclaration(ctx, place))}
        
