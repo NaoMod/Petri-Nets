@@ -82,7 +82,6 @@ export function isPetriNet(item: unknown): item is PetriNet {
 export interface Place extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'Place';
-    allTokens?: Array<Token> | Token
     currentTokenNumber: number
     maxCapacity: number
     name: string
@@ -106,18 +105,6 @@ export function isReset(item: unknown): item is Reset {
     return reflection.isInstance(item, Reset);
 }
 
-export interface Token extends AstNode {
-    readonly $container: Place;
-    readonly $type: 'Token';
-    position: Reference<Place>
-}
-
-export const Token = 'Token';
-
-export function isToken(item: unknown): item is Token {
-    return reflection.isInstance(item, Token);
-}
-
 export interface Transition extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'Transition';
@@ -139,14 +126,13 @@ export interface PetriNetAstType {
     PetriNet: PetriNet
     Place: Place
     Reset: Reset
-    Token: Token
     Transition: Transition
 }
 
 export class PetriNetAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Arc', 'ArcPtT', 'ArcTtP', 'Event', 'Evolution', 'PetriNet', 'Place', 'Reset', 'Token', 'Transition'];
+        return ['Arc', 'ArcPtT', 'ArcTtP', 'Event', 'Evolution', 'PetriNet', 'Place', 'Reset', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
@@ -169,8 +155,7 @@ export class PetriNetAstReflection extends AbstractAstReflection {
         const referenceId = `${refInfo.container.$type}:${refInfo.property}`;
         switch (referenceId) {
             case 'ArcPtT:source':
-            case 'ArcTtP:target':
-            case 'Token:position': {
+            case 'ArcTtP:target': {
                 return Place;
             }
             case 'ArcPtT:target':
@@ -197,14 +182,6 @@ export class PetriNetAstReflection extends AbstractAstReflection {
                         { name: 'events', type: 'array' },
                         { name: 'places', type: 'array' },
                         { name: 'transitions', type: 'array' }
-                    ]
-                };
-            }
-            case 'Place': {
-                return {
-                    name: 'Place',
-                    mandatory: [
-                        { name: 'allTokens', type: 'array' }
                     ]
                 };
             }

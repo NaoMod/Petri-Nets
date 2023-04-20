@@ -29,7 +29,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@11"
+                "$ref": "#/rules@10"
               },
               "arguments": []
             }
@@ -48,7 +48,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@3"
+                    "$ref": "#/rules@2"
                   },
                   "arguments": []
                 }
@@ -60,7 +60,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@2"
+                    "$ref": "#/rules@1"
                   },
                   "arguments": []
                 }
@@ -72,7 +72,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@4"
+                    "$ref": "#/rules@3"
                   },
                   "arguments": []
                 }
@@ -84,7 +84,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
                 "terminal": {
                   "$type": "RuleCall",
                   "rule": {
-                    "$ref": "#/rules@7"
+                    "$ref": "#/rules@6"
                   },
                   "arguments": []
                 }
@@ -95,48 +95,6 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
         ]
       },
       "definesHiddenTokens": false,
-      "fragment": false,
-      "hiddenTokens": [],
-      "parameters": [],
-      "wildcard": false
-    },
-    {
-      "$type": "ParserRule",
-      "name": "Token",
-      "definition": {
-        "$type": "Group",
-        "elements": [
-          {
-            "$type": "Keyword",
-            "value": "Token"
-          },
-          {
-            "$type": "Keyword",
-            "value": "in"
-          },
-          {
-            "$type": "Assignment",
-            "feature": "position",
-            "operator": "=",
-            "terminal": {
-              "$type": "CrossReference",
-              "type": {
-                "$ref": "#/rules@3"
-              },
-              "terminal": {
-                "$type": "RuleCall",
-                "rule": {
-                  "$ref": "#/rules@13"
-                },
-                "arguments": []
-              },
-              "deprecatedSyntax": false
-            }
-          }
-        ]
-      },
-      "definesHiddenTokens": false,
-      "entry": false,
       "fragment": false,
       "hiddenTokens": [],
       "parameters": [],
@@ -159,7 +117,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@12"
+                "$ref": "#/rules@11"
               },
               "arguments": []
             }
@@ -190,7 +148,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@13"
+                "$ref": "#/rules@12"
               },
               "arguments": []
             }
@@ -214,7 +172,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@15"
+                "$ref": "#/rules@14"
               },
               "arguments": []
             }
@@ -246,62 +204,10 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@15"
+                "$ref": "#/rules@14"
               },
               "arguments": []
             }
-          },
-          {
-            "$type": "Group",
-            "elements": [
-              {
-                "$type": "Keyword",
-                "value": ","
-              },
-              {
-                "$type": "Keyword",
-                "value": "every"
-              },
-              {
-                "$type": "Keyword",
-                "value": "token"
-              },
-              {
-                "$type": "Assignment",
-                "feature": "allTokens",
-                "operator": "=",
-                "terminal": {
-                  "$type": "RuleCall",
-                  "rule": {
-                    "$ref": "#/rules@1"
-                  },
-                  "arguments": []
-                }
-              },
-              {
-                "$type": "Group",
-                "elements": [
-                  {
-                    "$type": "Keyword",
-                    "value": ","
-                  },
-                  {
-                    "$type": "Assignment",
-                    "feature": "allTokens",
-                    "operator": "+=",
-                    "terminal": {
-                      "$type": "RuleCall",
-                      "rule": {
-                        "$ref": "#/rules@1"
-                      },
-                      "arguments": []
-                    }
-                  }
-                ],
-                "cardinality": "*"
-              }
-            ],
-            "cardinality": "?"
           },
           {
             "$type": "Keyword",
@@ -325,14 +231,14 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@5"
+              "$ref": "#/rules@4"
             },
             "arguments": []
           },
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@6"
+              "$ref": "#/rules@5"
             },
             "arguments": []
           }
@@ -362,7 +268,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@14"
+                "$ref": "#/rules@13"
               },
               "arguments": []
             }
@@ -374,29 +280,6 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           {
             "$type": "Assignment",
             "feature": "source",
-            "operator": "=",
-            "terminal": {
-              "$type": "CrossReference",
-              "type": {
-                "$ref": "#/rules@3"
-              },
-              "terminal": {
-                "$type": "RuleCall",
-                "rule": {
-                  "$ref": "#/rules@13"
-                },
-                "arguments": []
-              },
-              "deprecatedSyntax": false
-            }
-          },
-          {
-            "$type": "Keyword",
-            "value": "->"
-          },
-          {
-            "$type": "Assignment",
-            "feature": "target",
             "operator": "=",
             "terminal": {
               "$type": "CrossReference",
@@ -415,6 +298,29 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           },
           {
             "$type": "Keyword",
+            "value": "->"
+          },
+          {
+            "$type": "Assignment",
+            "feature": "target",
+            "operator": "=",
+            "terminal": {
+              "$type": "CrossReference",
+              "type": {
+                "$ref": "#/rules@1"
+              },
+              "terminal": {
+                "$type": "RuleCall",
+                "rule": {
+                  "$ref": "#/rules@11"
+                },
+                "arguments": []
+              },
+              "deprecatedSyntax": false
+            }
+          },
+          {
+            "$type": "Keyword",
             "value": ","
           },
           {
@@ -424,7 +330,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@15"
+                "$ref": "#/rules@14"
               },
               "arguments": []
             }
@@ -459,7 +365,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@14"
+                "$ref": "#/rules@13"
               },
               "arguments": []
             }
@@ -471,6 +377,29 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           {
             "$type": "Assignment",
             "feature": "source",
+            "operator": "=",
+            "terminal": {
+              "$type": "CrossReference",
+              "type": {
+                "$ref": "#/rules@1"
+              },
+              "terminal": {
+                "$type": "RuleCall",
+                "rule": {
+                  "$ref": "#/rules@11"
+                },
+                "arguments": []
+              },
+              "deprecatedSyntax": false
+            }
+          },
+          {
+            "$type": "Keyword",
+            "value": "->"
+          },
+          {
+            "$type": "Assignment",
+            "feature": "target",
             "operator": "=",
             "terminal": {
               "$type": "CrossReference",
@@ -489,29 +418,6 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           },
           {
             "$type": "Keyword",
-            "value": "->"
-          },
-          {
-            "$type": "Assignment",
-            "feature": "target",
-            "operator": "=",
-            "terminal": {
-              "$type": "CrossReference",
-              "type": {
-                "$ref": "#/rules@3"
-              },
-              "terminal": {
-                "$type": "RuleCall",
-                "rule": {
-                  "$ref": "#/rules@13"
-                },
-                "arguments": []
-              },
-              "deprecatedSyntax": false
-            }
-          },
-          {
-            "$type": "Keyword",
             "value": ","
           },
           {
@@ -521,7 +427,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@15"
+                "$ref": "#/rules@14"
               },
               "arguments": []
             }
@@ -548,14 +454,14 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@8"
+              "$ref": "#/rules@7"
             },
             "arguments": []
           },
           {
             "$type": "RuleCall",
             "rule": {
-              "$ref": "#/rules@9"
+              "$ref": "#/rules@8"
             },
             "arguments": []
           }
@@ -590,7 +496,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@11"
+                  "$ref": "#/rules@10"
                 },
                 "arguments": []
               },
@@ -628,7 +534,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@11"
+                  "$ref": "#/rules@10"
                 },
                 "arguments": []
               },
@@ -669,7 +575,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
       "name": "NameTrans",
       "definition": {
         "$type": "RegexToken",
-        "regex": "[_T][0-9]+"
+        "regex": "[_T][\\\\w_][0-9]+"
       },
       "fragment": false,
       "hidden": false
@@ -679,7 +585,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
       "name": "NamePlace",
       "definition": {
         "$type": "RegexToken",
-        "regex": "[_P][0-9]+"
+        "regex": "[_P][\\\\w_][0-9]+"
       },
       "fragment": false,
       "hidden": false
@@ -689,7 +595,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
       "name": "NameArc",
       "definition": {
         "$type": "RegexToken",
-        "regex": "[_A][0-9]+"
+        "regex": "[_A][\\\\w_][0-9]+"
       },
       "fragment": false,
       "hidden": false
