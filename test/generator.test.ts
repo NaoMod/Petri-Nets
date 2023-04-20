@@ -25,7 +25,7 @@ describe('Tests the code generator', () => {
 });
 
 const input = `
-    PetriNet PetriNet :
+    PetriNet test :
 
     Place P1 :
         8,
@@ -59,9 +59,9 @@ const input = `
         1
     end
 
-    Evolution PetriNet
+    Evolution test
 
-    Reset PetriNet
+    Reset test
 
 `;
 
@@ -176,23 +176,23 @@ class PetriNet {
     }
 
     public static void main(String[] args) {
-        PetriNet PetriNet = new PetriNet("PetriNet", 300);
+        PetriNet test = new PetriNet("test", 300);
 
-        Place P1 = new Place(PetriNet, "P1", 8, 4);
-        Place P2 = new Place(PetriNet, "P2", 3, 0);
-        Place P3 = new Place(PetriNet, "P3", 6, 3);
+        Place P1 = new Place(test, "P1", 8, 4);
+        Place P2 = new Place(test, "P2", 3, 0);
+        Place P3 = new Place(test, "P3", 6, 3);
 
-        Transition T1 = new Transition(PetriNet, "T1");
+        Transition T1 = new Transition(test, "T1");
 
-        new ArcPtT(PetriNet, "A1", P1, T1, 2);
-        new ArcTtP(PetriNet, "A2", T1, P2, 1);
-        new ArcPtT(PetriNet, "A3", P3, T1, 1);
+        new ArcPtT(test, "A1", P1, T1, 2);
+        new ArcTtP(test, "A2", T1, P2, 1);
+        new ArcPtT(test, "A3", P3, T1, 1);
 
-        PetriNet.sortArc();
+        test.sortArc();
 
-        new Evolution(PetriNet);
+        new Evolution(test);
 
-        new Reset(PetriNet);
+        new Reset(test);
 
     }
 }

@@ -42,7 +42,7 @@ export function generateJavaContent(ctx: GeneratorContext): Generated {
     return toNode`
         import java.util.*;
 
-        class ${ctx.petrinet.name} {
+        class PetriNet {
         ${generateMainClass(ctx)}
         }
 
@@ -69,7 +69,7 @@ export function generateMainClass(ctx: GeneratorContext): Generated {
     private List<Event> events = new ArrayList<Event>();
     private boolean isSorted = false;
 
-    public ${ctx.petrinet.name}(String name, int maxIteration) {
+    public PetriNet(String name, int maxIteration) {
         this.name = name;
         this.maxTriggers = maxIteration;
     }
@@ -139,7 +139,7 @@ export function generateMainClass(ctx: GeneratorContext): Generated {
 export function generateMainMethod(ctx: GeneratorContext): Generated {
     return toNode`
     public static void main(String[] args) { 
-        ${ctx.petrinet.name} petrinet = new ${ctx.petrinet.name}("${ctx.petrinet.name}", 300);
+        PetriNet ${ctx.petrinet.name} = new ${ctx.petrinet.name}("${ctx.petrinet.name}", 300);
 
         ${joinWithExtraNL(ctx.petrinet.places, place => generatePlaceDeclaration(ctx, place))}
        
@@ -157,24 +157,24 @@ export function generateMainMethod(ctx: GeneratorContext): Generated {
 export function generateTokenClass(ctx: GeneratorContext): Generated {
     return toNode`
     class Token {
-        private ${ctx.petrinet.name} petrinet;
+        private PetriNet petrinet;
         private Place position;
         private String source;
 
-        public Token(${ctx.petrinet.name} petrinet, Place position) {
+        public Token(PetriNet petrinet, Place position) {
             this.petrinet = petrinet;
             this.position = position;
             this.source = position.getName();
         }
 
-        public Token(${ctx.petrinet.name} petrinet, Place position, Transition source) {
+        public Token(PetriNet petrinet, Place position, Transition source) {
             this.petrinet = petrinet;
             if (position != null)
                 this.set(position);
             this.source = source.getName();
         }
 
-        public Token(${ctx.petrinet.name} petrinet, Transition transition) {
+        public Token(PetriNet petrinet, Transition transition) {
             this.petrinet = petrinet;
             this.position = null;
             this.source = transition.getName();
@@ -202,13 +202,13 @@ export function generateTokenClass(ctx: GeneratorContext): Generated {
 export function generatePlaceClass(ctx: GeneratorContext): Generated {
     return toNode`
     class Place {
-        private ${ctx.petrinet.name} petrinet;
+        private PetriNet petrinet;
         private String name;
         private int maxCapacity;
         private int currentTokenNumber;
         private List<Token> everyTokens = new ArrayList<Token>();
 
-        public Place(${ctx.petrinet.name} petrinet, String name, int maxCapacity) {
+        public Place(PetriNet petrinet, String name, int maxCapacity) {
             this.petrinet = petrinet;
             this.name = name;
             this.maxCapacity = maxCapacity;
@@ -216,7 +216,7 @@ export function generatePlaceClass(ctx: GeneratorContext): Generated {
             this.petrinet.addPlace(this);
         }
 
-        public Place(${ctx.petrinet.name} petrinet, String name, int maxCapacity, int currentTokenNumber) throws IllegalArgumentException {
+        public Place(PetriNet petrinet, String name, int maxCapacity, int currentTokenNumber) throws IllegalArgumentException {
             this.petrinet = petrinet;
             this.name = name;
             if (currentTokenNumber > maxCapacity)
@@ -293,11 +293,11 @@ export function generatePlaceClass(ctx: GeneratorContext): Generated {
 export function generateTransitionClass(ctx: GeneratorContext): Generated {
     return toNode`
     class Transition {
-        private ${ctx.petrinet.name} petrinet;
+        private PetriNet petrinet;
         private boolean doable = false;
         private String name;
 
-        public Transition(${ctx.petrinet.name} petrinet, String name) {
+        public Transition(PetriNet petrinet, String name) {
             this.petrinet = petrinet;
             this.name = name;
             this.petrinet.addTransition(this);
@@ -333,11 +333,11 @@ export function generateArcClass(ctx: GeneratorContext): Generated {
     }
 
     abstract class Arc {
-        protected ${ctx.petrinet.name} petrinet;
+        protected PetriNet petrinet;
         protected String name;
         protected int weight;
 
-        protected Arc(${ctx.petrinet.name} petrinet, String name, int weight) throws IllegalArgumentException {
+        protected Arc(PetriNet petrinet, String name, int weight) throws IllegalArgumentException {
             this.petrinet = petrinet;
             this.name = name;
             if (weight < 0)
@@ -371,7 +371,7 @@ export function generateArcPtTClass(ctx: GeneratorContext): Generated {
         private Place source;
         private Transition target;
 
-        public ArcPtT(${ctx.petrinet.name} petrinet, String name, Place source, Transition target, int weight)
+        public ArcPtT(PetriNet petrinet, String name, Place source, Transition target, int weight)
             throws IllegalArgumentException {
             super(petrinet, name, weight);
             this.source = source;
@@ -404,7 +404,7 @@ export function generateArcTtPClass(ctx: GeneratorContext): Generated {
         private Transition source;
         private Place target;
 
-        public ArcTtP(${ctx.petrinet.name} petrinet, String name, Transition source, Place target, int weight)
+        public ArcTtP(PetriNet petrinet, String name, Transition source, Place target, int weight)
             throws IllegalArgumentException {
             super(petrinet, name, weight);
             this.source = source;
@@ -434,9 +434,9 @@ export function generateArcTtPClass(ctx: GeneratorContext): Generated {
 export function generateEventClass(ctx: GeneratorContext): Generated {
     return toNode`
     abstract class Event {
-        protected ${ctx.petrinet.name} petrinet;
+        protected PetriNet petrinet;
 
-        Event(${ctx.petrinet.name} petrinet) {
+        Event(PetriNet petrinet) {
             this.petrinet = petrinet;
             if (!this.petrinet.isSorted())
                 this.petrinet.sortArc();
@@ -459,7 +459,7 @@ export function generateEvolutionClass(ctx: GeneratorContext): Generated {
     class Evolution extends Event {
         List<Trigger> everyTriggers = new ArrayList<Trigger>();
 
-        public Evolution(${ctx.petrinet.name} petrinet) {
+        public Evolution(PetriNet petrinet) {
            super(petrinet);
             this.petrinet.addEvent(this);
             ContinueEvolving(EvolveIt(1));
@@ -505,10 +505,10 @@ export function generateEvolutionClass(ctx: GeneratorContext): Generated {
 export function generateTriggerClass(ctx: GeneratorContext): Generated {
     return toNode`
     class Trigger {
-        private ${ctx.petrinet.name} petrinet;
+        private PetriNet petrinet;
         private Transition transition;
 
-        public Trigger(${ctx.petrinet.name} petrinet, Transition transition) {
+        public Trigger(PetriNet petrinet, Transition transition) {
             this.petrinet = petrinet;
             if (TriggerIt(transition))
                 this.transition = transition;
@@ -560,7 +560,7 @@ export function generateTriggerClass(ctx: GeneratorContext): Generated {
 export function generateResetClass(ctx: GeneratorContext): Generated {
     return toNode`
     class Reset extends Event {
-        public Reset(${ctx.petrinet.name} petrinet) {
+        public Reset(PetriNet petrinet) {
             super(petrinet);
             ContinueResetting(petrinet.getEvents().size());
             this.petrinet.addEvent(this);
