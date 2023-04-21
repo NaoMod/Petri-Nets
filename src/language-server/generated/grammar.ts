@@ -324,6 +324,14 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "value": ","
           },
           {
+            "$type": "Keyword",
+            "value": "Weight"
+          },
+          {
+            "$type": "Keyword",
+            "value": ":"
+          },
+          {
             "$type": "Assignment",
             "feature": "weight",
             "operator": "=",
@@ -419,6 +427,14 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           {
             "$type": "Keyword",
             "value": ","
+          },
+          {
+            "$type": "Keyword",
+            "value": "Weight"
+          },
+          {
+            "$type": "Keyword",
+            "value": ":"
           },
           {
             "$type": "Assignment",

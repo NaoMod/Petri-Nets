@@ -19,13 +19,13 @@ Arc:
 ArcPtT:
     'Arc' name=NameArc ':'
         source=[Place:NamePlace] '->' target=[Transition:NameTrans] ',' 
-        weight=INT 
+        'Weight' ':' weight=INT 
     'end';
 
 ArcTtP:
     'Arc' name=NameArc ':'
         source=[Transition:NameTrans] '->' target=[Place:NamePlace] ',' 
-        weight=INT 
+        'Weight' ':' weight=INT 
     'end';
 
 Event: 
