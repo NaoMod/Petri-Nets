@@ -29,7 +29,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@10"
+                "$ref": "#/rules@13"
               },
               "arguments": []
             }
@@ -148,7 +148,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@12"
+                "$ref": "#/rules@10"
               },
               "arguments": []
             }
@@ -183,7 +183,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           },
           {
             "$type": "Keyword",
-            "value": "current"
+            "value": "Initial"
           },
           {
             "$type": "Keyword",
@@ -199,7 +199,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
           },
           {
             "$type": "Assignment",
-            "feature": "currentTokenNumber",
+            "feature": "initialTokenNumber",
             "operator": "=",
             "terminal": {
               "$type": "RuleCall",
@@ -268,7 +268,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@13"
+                "$ref": "#/rules@12"
               },
               "arguments": []
             }
@@ -289,7 +289,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@12"
+                  "$ref": "#/rules@10"
                 },
                 "arguments": []
               },
@@ -365,7 +365,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
             "terminal": {
               "$type": "RuleCall",
               "rule": {
-                "$ref": "#/rules@13"
+                "$ref": "#/rules@12"
               },
               "arguments": []
             }
@@ -409,7 +409,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@12"
+                  "$ref": "#/rules@10"
                 },
                 "arguments": []
               },
@@ -496,7 +496,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@10"
+                  "$ref": "#/rules@13"
                 },
                 "arguments": []
               },
@@ -534,7 +534,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
               "terminal": {
                 "$type": "RuleCall",
                 "rule": {
-                  "$ref": "#/rules@10"
+                  "$ref": "#/rules@13"
                 },
                 "arguments": []
               },
@@ -562,10 +562,10 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
     },
     {
       "$type": "TerminalRule",
-      "name": "ID",
+      "name": "NamePlace",
       "definition": {
         "$type": "RegexToken",
-        "regex": "[_a-zA-Z][\\\\w_]*"
+        "regex": "[_P][0-9]+"
       },
       "fragment": false,
       "hidden": false
@@ -575,17 +575,7 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
       "name": "NameTrans",
       "definition": {
         "$type": "RegexToken",
-        "regex": "[_T][\\\\w_][0-9]+"
-      },
-      "fragment": false,
-      "hidden": false
-    },
-    {
-      "$type": "TerminalRule",
-      "name": "NamePlace",
-      "definition": {
-        "$type": "RegexToken",
-        "regex": "[_P][\\\\w_][0-9]+"
+        "regex": "[_T][0-9]+"
       },
       "fragment": false,
       "hidden": false
@@ -595,7 +585,17 @@ export const PetriNetGrammar = (): Grammar => loadedPetriNetGrammar ?? (loadedPe
       "name": "NameArc",
       "definition": {
         "$type": "RegexToken",
-        "regex": "[_A][\\\\w_][0-9]+"
+        "regex": "[_A][0-9]+"
+      },
+      "fragment": false,
+      "hidden": false
+    },
+    {
+      "$type": "TerminalRule",
+      "name": "ID",
+      "definition": {
+        "$type": "RegexToken",
+        "regex": "[_a-zA-Z][\\\\w_]*"
       },
       "fragment": false,
       "hidden": false

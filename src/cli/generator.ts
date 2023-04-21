@@ -630,9 +630,9 @@ function generatePetrinetDeclaration(ctx: GeneratorContext): Generated {
 }*/
 
 function generatePlaceDeclaration(ctx: GeneratorContext, place: Place): Generated {
-    if(place.currentTokenNumber>0) {
+    if(place.initialTokenNumber>0) {
         return toNode`
-            Place ${place.name} = new Place(${ctx.petrinet.name}, "${place.name}", ${place.maxCapacity}, ${place.currentTokenNumber});
+            Place ${place.name} = new Place(${ctx.petrinet.name}, "${place.name}", ${place.maxCapacity}, ${place.initialTokenNumber});
         `;
     }
     return toNode`

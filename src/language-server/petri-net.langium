@@ -10,7 +10,7 @@ Transition:
 Place: 
     'Place' name=NamePlace ':'
         'Capacity' ':'maxCapacity=INT ',' 
-        'current' 'token' 'number' ':' currentTokenNumber=INT 
+        'Initial' 'token' 'number' ':' initialTokenNumber=INT 
     'end';
 
 Arc: 
@@ -42,11 +42,10 @@ Reset:
 hidden terminal WS: /\s+/;
 
 // Read a 'variable', here can be a letter followed by at least one number
-//terminal Name: /[_a-zA-Z][\w_]*/;s
+terminal NamePlace: /[_P][0-9]+/;
+terminal NameTrans: /[_T][0-9]+/; 
+terminal NameArc: /[_A][0-9]+/;
 terminal ID: /[_a-zA-Z][\w_]*/;
-terminal NameTrans: /[_T][\w_][0-9]+/;  
-terminal NamePlace: /[_P][\w_][0-9]+/;
-terminal NameArc: /[_A][\w_][0-9]+/;
 
 terminal INT returns number: /[0-9]+/;
 

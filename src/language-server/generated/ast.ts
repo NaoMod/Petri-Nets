@@ -82,7 +82,7 @@ export function isPetriNet(item: unknown): item is PetriNet {
 export interface Place extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'Place';
-    currentTokenNumber: number
+    initialTokenNumber: number
     maxCapacity: number
     name: string
 }
