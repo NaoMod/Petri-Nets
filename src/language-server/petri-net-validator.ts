@@ -33,8 +33,8 @@ export class PetriNetValidator {
             if (firstChar.toUpperCase() !== firstChar) {
                 accept('warning', 'Place name should start with a capital.', { node: place, property: 'name' });
             }
-        } if (place.currentTokenNumber>place.maxCapacity) {
-            accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'currentTokenNumber' });
+        } if (place.initialTokenNumber>place.maxCapacity) {
+            accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'initialTokenNumber' });
         }
     }
 
@@ -95,8 +95,8 @@ export class PetriNetValidator {
      */
     checkLessCurrentTokenNumberThanMaxToken(petrinet: PetriNet, accept: ValidationAcceptor): void {
         for(const place of petrinet.places) {
-            if(place.currentTokenNumber>place.maxCapacity) {
-                accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'currentTokenNumber' });
+            if(place.initialTokenNumber>place.maxCapacity) {
+                accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'initialTokenNumber' });
             }
         }
     }

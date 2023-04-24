@@ -37,7 +37,9 @@
     "files": [
         "bin",
         "out",
-        "src"
+        "src", 
+        "syntaxes",
+        "language-configuration.json"
     ],
     "bin": {
         "petri-net-cli": "./bin/cli"
