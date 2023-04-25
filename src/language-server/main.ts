@@ -1,24 +1,27 @@
-import { EmptyFileSystem, Reference, startLanguageServer, toString } from 'langium';
-import { NodeFileSystem } from 'langium/node';
-import { createConnection, ProposedFeatures } from 'vscode-languageserver/node';
-import { createPetriNetServices } from './petri-net-module';
-import { PetriNet, isEvolution, isArcPtT, Place, Transition } from './generated/ast';
-import { PetriNetState, TokenState, ArcPtTState, ArcTtPState, PlaceState, TransitionState, EvolutionState, ResetState, Trigger } from './runtimeState';
-import { extractDocument } from '../cli/cli-util';
+import { EmptyFileSystem, Reference, toString } from 'langium';
 import { parseHelper } from 'langium/test';
+import { extractDocument } from '../cli/cli-util';
+import { PetriNet, Place, Transition, isArcPtT, isEvolution } from './generated/ast';
+import { createPetriNetServices } from './petri-net-module';
+import { ArcPtTState, ArcTtPState, EvolutionState, PetriNetState, PlaceState, ResetState, TokenState, TransitionState, Trigger } from './runtimeState';
 
-// Create a connection to the client
+/* // Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);
 
 // Inject the shared services and language-specific services
 const { shared } = createPetriNetServices({ connection, ...NodeFileSystem });
 
 // Start the language server with the shared services
-startLanguageServer(shared);
+startLanguageServer(shared); */
 
-
-
-
+/**
+ * Create a PlaceState from a reference
+ * 
+ * @param petrinet, the parsed petrinet
+ * @param refPlace, the place's reference
+ * @param petrinetState, the petrinetState corresponding to the the parsed petrinet
+ * @returns new PlaceState with the attributes of the reference
+ */
 function findPlaceFromReference(petrinet: PetriNet, refPlace: Reference<Place>, petrinetState: PetriNetState): PlaceState {
   for(let place of petrinet.places) {
     if(place === refPlace.ref) return new PlaceState(petrinetState, place.name, place.maxCapacity, place.initialTokenNumber);
@@ -26,6 +29,14 @@ function findPlaceFromReference(petrinet: PetriNet, refPlace: Reference<Place>, 
   return new PlaceState(petrinetState, "null", 0);
 }
 
+/**
+ * Create a TransitionState from a reference
+ * 
+ * @param petrinet, the parsed petrinet
+ * @param refTransition, the transition's reference
+ * @param petrinetState, the petrinetState corresponding to the the parsed petrinet
+ * @returns new TransitionState with the attributes of the reference
+ */
 function findTransitionFromReference(petrinet: PetriNet, refTransition: Reference<Transition>, petrinetState: PetriNetState): TransitionState {
   for(let transition of petrinet.transitions) {
     if(transition === refTransition.ref) return new TransitionState(petrinetState, transition.name);
@@ -196,5 +207,5 @@ console.log("-------------------------------------------------------------------
 }
 
 
-run("test.PetriNet"); //Need to be automatized so every file.PetriNet is runned
+run("/home/naomod1/Documents/Petri-Nets/example/test.PetriNet"); //Need to be automatized so every file.PetriNet is runned
 
