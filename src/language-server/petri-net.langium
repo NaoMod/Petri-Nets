@@ -2,7 +2,7 @@ grammar PetriNet
 
 entry PetriNet: 
     'PetriNet' name=ID ':'
-    (places+=Place|transitions+=Transition|arcs+=Arc|events+=Event)*;
+    (places+=Place|transitions+=Transition|arcs+=Arc)*;
 
 Transition:
     'Transition' name=NameTrans ;
@@ -27,15 +27,6 @@ ArcTtP:
         source=[Transition:NameTrans] '->' target=[Place:NamePlace] ',' 
         'Weight' ':' weight=INT 
     'end';
-
-Event: 
-    Evolution | Reset ;
-
-Evolution:
-    'Evolution' petrinet=[PetriNet:ID];
-
-Reset:
-    'Reset' petrinet=[PetriNet:ID];
 
 
 // Ignore white spaces

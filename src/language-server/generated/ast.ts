@@ -14,14 +14,6 @@ export function isArc(item: unknown): item is Arc {
     return reflection.isInstance(item, Arc);
 }
 
-export type Event = Evolution | Reset;
-
-export const Event = 'Event';
-
-export function isEvent(item: unknown): item is Event {
-    return reflection.isInstance(item, Event);
-}
-
 export interface ArcPtT extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'ArcPtT';
@@ -52,22 +44,9 @@ export function isArcTtP(item: unknown): item is ArcTtP {
     return reflection.isInstance(item, ArcTtP);
 }
 
-export interface Evolution extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'Evolution';
-    petrinet: Reference<PetriNet>
-}
-
-export const Evolution = 'Evolution';
-
-export function isEvolution(item: unknown): item is Evolution {
-    return reflection.isInstance(item, Evolution);
-}
-
 export interface PetriNet extends AstNode {
     readonly $type: 'PetriNet';
     arcs: Array<Arc>
-    events: Array<Event>
     name: string
     places: Array<Place>
     transitions: Array<Transition>
@@ -93,18 +72,6 @@ export function isPlace(item: unknown): item is Place {
     return reflection.isInstance(item, Place);
 }
 
-export interface Reset extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'Reset';
-    petrinet: Reference<PetriNet>
-}
-
-export const Reset = 'Reset';
-
-export function isReset(item: unknown): item is Reset {
-    return reflection.isInstance(item, Reset);
-}
-
 export interface Transition extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'Transition';
@@ -121,18 +88,15 @@ export interface PetriNetAstType {
     Arc: Arc
     ArcPtT: ArcPtT
     ArcTtP: ArcTtP
-    Event: Event
-    Evolution: Evolution
     PetriNet: PetriNet
     Place: Place
-    Reset: Reset
     Transition: Transition
 }
 
 export class PetriNetAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Arc', 'ArcPtT', 'ArcTtP', 'Event', 'Evolution', 'PetriNet', 'Place', 'Reset', 'Transition'];
+        return ['Arc', 'ArcPtT', 'ArcTtP', 'PetriNet', 'Place', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
@@ -140,10 +104,6 @@ export class PetriNetAstReflection extends AbstractAstReflection {
             case ArcPtT:
             case ArcTtP: {
                 return this.isSubtype(Arc, supertype);
-            }
-            case Evolution:
-            case Reset: {
-                return this.isSubtype(Event, supertype);
             }
             default: {
                 return false;
@@ -162,10 +122,6 @@ export class PetriNetAstReflection extends AbstractAstReflection {
             case 'ArcTtP:source': {
                 return Transition;
             }
-            case 'Evolution:petrinet':
-            case 'Reset:petrinet': {
-                return PetriNet;
-            }
             default: {
                 throw new Error(`${referenceId} is not a valid reference id.`);
             }
@@ -179,7 +135,6 @@ export class PetriNetAstReflection extends AbstractAstReflection {
                     name: 'PetriNet',
                     mandatory: [
                         { name: 'arcs', type: 'array' },
-                        { name: 'events', type: 'array' },
                         { name: 'places', type: 'array' },
                         { name: 'transitions', type: 'array' }
                     ]
