@@ -25,44 +25,43 @@ describe('Tests the code generator', () => {
 });
 
 const input = `
-    PetriNet test :
+PetriNet test :
 
     Place P1 :
-        8,
-        4
+        Capacity : 8,
+        Initial token number : 4
     end
 
     Place P2 :
-        3,
-        0
+        Capacity : 3,
+        Initial token number : 0
     end
 
     Place P3 :
-        6,
-        3
+        Capacity : 6,
+        Initial token number : 3
     end
 
     Transition T1
 
     Arc A1 :
         P1 -> T1,
-        2
+        Weight : 2
     end
 
     Arc A2 :
         T1 -> P2,
-        1
+        Weight : 1
     end
 
     Arc A3 :
         P3 -> T1,
-        1
+        Weight : 1
     end
 
     Evolution test
 
     Reset test
-
 `;
 
 const expectedOutput =

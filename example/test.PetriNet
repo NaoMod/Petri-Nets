@@ -27,25 +27,4 @@ PetriNet test :
         1
     end
 
-    Show P1
-    Show P2
-
-    Trigger T1
-
-    Show P1
-    Show P2
-
-    Undo test
-
-    Show P1
-    Show P2
-
-    Trigger T1
-
-    Show P1
-    Show P2
-
-    Reset test
-
-    Show P1
-    Show P2
+    Evolution test
