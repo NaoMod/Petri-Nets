@@ -9,9 +9,7 @@ export function registerValidationChecks(services: PetriNetServices) {
     const registry = services.validation.ValidationRegistry;
     const validator = services.validation.PetriNetValidator;
     const checks: ValidationChecks<PetriNetAstType> = {
-        Place: validator.checkPlaceStartsWithCapitalAndLessCurrentTokenNumberThanMaxTokenNumber,
-        Transition: validator.checkTransitionStartsWithCapital,
-        Arc: validator.checkArcStartsWithCapital,
+        Place: validator.checkPlaceHaveLessCurrentTokenNumberThanMaxTokenNumber,
         PetriNet: validator.checkUniquePlacesTransitionsAndArcs
     };
     registry.register(checks, validator);
@@ -27,13 +25,8 @@ export class PetriNetValidator {
      * @param place the place to check
      * @param accept the acceptor to report errors
      */
-    checkPlaceStartsWithCapitalAndLessCurrentTokenNumberThanMaxTokenNumber(place: Place, accept: ValidationAcceptor): void {
-        if (place.name) {
-            const firstChar = place.name.substring(0, 1);
-            if (firstChar.toUpperCase() !== firstChar) {
-                accept('warning', 'Place name should start with a capital.', { node: place, property: 'name' });
-            }
-        } if (place.initialTokenNumber > place.maxCapacity) {
+    checkPlaceHaveLessCurrentTokenNumberThanMaxTokenNumber(place: Place, accept: ValidationAcceptor): void {
+        if (place.initialTokenNumber > place.maxCapacity) {
             accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'initialTokenNumber' });
         } if (place.initialTokenNumber < 0) {
             accept('error', `Initial token number cannot be negative.`, { node: place, property: 'initialTokenNumber' });
@@ -42,33 +35,6 @@ export class PetriNetValidator {
         }
     }
 
-    /**
-     * Checks if the transition name starts with a capital letter.
-     * @param transition the transition to check
-     * @param accept the acceptor to report errors
-     */
-    checkTransitionStartsWithCapital(transition: Transition, accept: ValidationAcceptor): void {
-        if (transition.name) {
-            const firstChar = transition.name.substring(0, 1);
-            if (firstChar.toUpperCase() !== firstChar) {
-                accept('warning', 'Transition name should start with a capital.', { node: transition, property: 'name' });
-            }
-        }
-    }
-
-    /**
-     * Checks if the arc name starts with a capital letter.
-     * @param arc the place to check
-     * @param accept the acceptor to report errors
-     */
-    checkArcStartsWithCapital(arc: Arc, accept: ValidationAcceptor): void {
-        if (arc.name) {
-            const firstChar = arc.name.substring(0, 1);
-            if (firstChar.toUpperCase() !== firstChar) {
-                accept('warning', 'Arc name should start with a capital.', { node: arc, property: 'name' });
-            }
-        }
-    }
 
 
     /**
@@ -91,18 +57,4 @@ export class PetriNetValidator {
             }
         }
     }
-
-    /**
-     * Checks if there are too many tokens in a place, exceeding the max capacity
-     * @param petrinet the petrinet to check
-     * @param accept the acceptor to report errors
-     */
-    checkLessCurrentTokenNumberThanMaxToken(petrinet: PetriNet, accept: ValidationAcceptor): void {
-        for (const place of petrinet.places) {
-            if (place.initialTokenNumber > place.maxCapacity) {
-                accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'initialTokenNumber' });
-            }
-        }
-    }
-
 }
