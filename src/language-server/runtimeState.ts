@@ -160,12 +160,12 @@ export class PetriNetState {
 export class PlaceState {
   private petrinetState: PetriNetState;
   private place: Place;
-  private everyTokens: Array<string> = [];
+  private everyTokens: Array<TokenState> = [];
 
   constructor(petrinet: PetriNetState, place: Place, currentTokenNumber: number) {
     this.petrinetState = petrinet;
     this.place = place;
-    for (let i = 0; i < currentTokenNumber; i++) this.everyTokens.push("initial state");
+    for (let i = 0; i < currentTokenNumber; i++) this.everyTokens.push(new TokenState());
   }
 
   // Getters
@@ -178,7 +178,7 @@ export class PlaceState {
   getMaxCapacity(): number {
     return this.place.maxCapacity;
   }
-  getEveryTokens(): Array<string> {
+  getEveryTokens(): Array<TokenState> {
     return this.everyTokens;
   }
   getCurrentTokenNumber(): number {
@@ -187,7 +187,7 @@ export class PlaceState {
 
   // Adder
   addTokens(n: number, source: Transition): void {
-    for (let i = 0; i < n; i++) this.everyTokens.push("From " + source.name);
+    for (let i = 0; i < n; i++) this.everyTokens.push(new TokenState(source));
   }
 
   // Remover
@@ -196,6 +196,20 @@ export class PlaceState {
   }
 }
 
+class TokenState {
+  private source: string;
+
+  constructor(source?: Transition) {
+    if (source)
+      this.source = "From " + source.name;
+    else this.source = "initial state";
+  }
+
+  // Getters
+  getSource(): string {
+    return this.source;
+  }
+}
 
 export class TransitionState {
   private petrinetState: PetriNetState;

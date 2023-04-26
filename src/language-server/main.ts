@@ -35,11 +35,11 @@ async function run(fileName: string): Promise<void> {
   for (let place of petrinetState.getPlaces()) {
     console.log();
     console.log("    Tokens in place " + place.getPlace().name + " : ");
-    console.log(place.getEveryTokens());
+    for (let tok of place.getEveryTokens()) {
+      console.log(tok.getSource());
+    }
     console.log();
   }
-
-  console.log("------------------------------------------------------------------------");
 
   console.log("------------------------------------------------------------------------");
 
@@ -48,11 +48,11 @@ async function run(fileName: string): Promise<void> {
   for (let place of petrinetState.getPlaces()) {
     console.log();
     console.log("    Tokens in place " + place.getPlace().name + " : ");
-    console.log(place.getEveryTokens());
+    for (let tok of place.getEveryTokens()) {
+      console.log(tok.getSource());
+    }
     console.log();
   }
-
-  console.log("------------------------------------------------------------------------");
 
   console.log("------------------------------------------------------------------------");
 
@@ -61,7 +61,9 @@ async function run(fileName: string): Promise<void> {
   for (let place of petrinetState.getPlaces()) {
     console.log();
     console.log("    Tokens in place " + place.getPlace().name + " : ");
-    console.log(place.getEveryTokens());
+    for (let tok of place.getEveryTokens()) {
+      console.log(tok.getSource());
+    }
     console.log();
   }
 
