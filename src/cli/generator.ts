@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { expandToNode as toNode, joinToNode as join, Generated, toString } from 'langium';
-import { PetriNet, Place, Transition, Arc, Event } from '../language-server/generated/ast';
+import { PetriNet, Place, Transition, Arc } from '../language-server/generated/ast';
 import { extractDestinationAndName } from './cli-util';
-import { isArcPtT, isEvolution } from '../language-server/generated/ast';
+import { isArcPtT } from '../language-server/generated/ast';
 
 
 export function generateJava(petrinet: PetriNet, filePath: string, destination: string | undefined): string {
@@ -17,9 +17,9 @@ export function generateJava(petrinet: PetriNet, filePath: string, destination: 
 }
 
 interface GeneratorContext {
-    petrinet : PetriNet;
-    fileName : string;
-    destination : string;
+    petrinet: PetriNet;
+    fileName: string;
+    destination: string;
 }
 
 function generate(ctx: GeneratorContext): string {
@@ -53,8 +53,6 @@ export function generateJavaContent(ctx: GeneratorContext): Generated {
         ${generateTransitionClass(ctx)}
 
         ${generateArcClass(ctx)}
-    
-        ${generateEventClass(ctx)}
 
     `;
 }
@@ -148,7 +146,6 @@ export function generateMainMethod(ctx: GeneratorContext): Generated {
 
         petrinet.sortArc();
         
-        ${joinWithExtraNL(ctx.petrinet.events, event => generateEventDeclaration(ctx, event))}
     }
     `;
 }
@@ -630,7 +627,7 @@ function generatePetrinetDeclaration(ctx: GeneratorContext): Generated {
 }*/
 
 function generatePlaceDeclaration(ctx: GeneratorContext, place: Place): Generated {
-    if(place.initialTokenNumber>0) {
+    if (place.initialTokenNumber > 0) {
         return toNode`
             Place ${place.name} = new Place(${ctx.petrinet.name}, "${place.name}", ${place.maxCapacity}, ${place.initialTokenNumber});
         `;
@@ -638,7 +635,7 @@ function generatePlaceDeclaration(ctx: GeneratorContext, place: Place): Generate
     return toNode`
         Place ${place.name} = new Place(${ctx.petrinet.name}, "${place.name}", ${place.maxCapacity});
     `;
-    
+
 }
 
 function generateTransitionDeclaration(ctx: GeneratorContext, transition: Transition): Generated {
@@ -648,7 +645,7 @@ function generateTransitionDeclaration(ctx: GeneratorContext, transition: Transi
 }
 
 function generateArcDeclaration(ctx: GeneratorContext, arc: Arc): Generated {
-    if(isArcPtT(arc)) {
+    if (isArcPtT(arc)) {
         return toNode`
             new ArcPtT(${ctx.petrinet.name}, "${arc.name}", ${arc.source}, ${arc.target}, ${arc.weight});
         `;
@@ -658,14 +655,3 @@ function generateArcDeclaration(ctx: GeneratorContext, arc: Arc): Generated {
     `;
 }
 
-function generateEventDeclaration(ctx: GeneratorContext, event: Event): Generated {
-    if(isEvolution(event)) {
-        return toNode`
-            new Evolution(${ctx.petrinet.name});
-        `;
-    }
-    return toNode`
-        new Reset(${ctx.petrinet.name});
-    `;
-
-}

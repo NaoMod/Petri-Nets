@@ -1,3 +1,5 @@
+// NOT USEABLE
+
 import { describe, expect, test } from 'vitest';
 import { EmptyFileSystem, Generated, normalizeEOL, toString } from 'langium';
 import { parseHelper } from 'langium/test';
