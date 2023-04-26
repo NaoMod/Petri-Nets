@@ -33,8 +33,12 @@ export class PetriNetValidator {
             if (firstChar.toUpperCase() !== firstChar) {
                 accept('warning', 'Place name should start with a capital.', { node: place, property: 'name' });
             }
-        } if (place.initialTokenNumber>place.maxCapacity) {
+        } if (place.initialTokenNumber > place.maxCapacity) {
             accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'initialTokenNumber' });
+        } if (place.initialTokenNumber < 0) {
+            accept('error', `Initial token number cannot be negative.`, { node: place, property: 'initialTokenNumber' });
+        } if (place.maxCapacity < 0) {
+            accept('error', `Max capacity cannot be negative.`, { node: place, property: 'maxCapacity' });
         }
     }
 
@@ -74,7 +78,7 @@ export class PetriNetValidator {
      */
     checkUniquePlacesTransitionsAndArcs(petrinet: PetriNet, accept: ValidationAcceptor): void {
         // check for duplicate state and event names and add them to the map
-        const names = new MultiMap<string, Place | Transition | Arc >();
+        const names = new MultiMap<string, Place | Transition | Arc>();
         const allSymbols = [...petrinet.places, ...petrinet.transitions, ...petrinet.arcs];
         for (const symbol of allSymbols) {
             names.add(symbol.name, symbol);
@@ -94,8 +98,8 @@ export class PetriNetValidator {
      * @param accept the acceptor to report errors
      */
     checkLessCurrentTokenNumberThanMaxToken(petrinet: PetriNet, accept: ValidationAcceptor): void {
-        for(const place of petrinet.places) {
-            if(place.initialTokenNumber>place.maxCapacity) {
+        for (const place of petrinet.places) {
+            if (place.initialTokenNumber > place.maxCapacity) {
                 accept('error', `Too many tokens in this place: ${place.name}`, { node: place, property: 'initialTokenNumber' });
             }
         }
