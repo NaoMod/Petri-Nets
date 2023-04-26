@@ -8,7 +8,6 @@ export class PetriNetState {
   private currentNumberIterations: number;
   private placesState: Array<PlaceState> = [];
   private transitionsState: Array<TransitionState> = [];
-  private tokensState: Array<TokenState> = [];
 
   constructor(petrinet: PetriNet, maxIteration: number) {
     this.petrinet = petrinet;
@@ -18,9 +17,6 @@ export class PetriNetState {
     for (let place of petrinet.places) {
       let placeState = new PlaceState(this, place, place.initialTokenNumber);
       this.placesState.push(placeState);
-      for (let i = 0; i < place.initialTokenNumber; i++) {
-        this.tokensState.push(new TokenState(this, placeState));
-      }
     }
     for (let transition of petrinet.transitions) {
       this.transitionsState.push(new TransitionState(this, transition));
@@ -30,9 +26,6 @@ export class PetriNetState {
   // Getters
   public getPetriNet(): PetriNet {
     return this.petrinet;
-  }
-  public getTokens(): Array<TokenState> {
-    return this.tokensState;
   }
   public getPlaces(): Array<PlaceState> {
     return this.placesState;
@@ -150,91 +143,16 @@ export class PetriNetState {
 
         // Arc Place to Transition
         if ((isArcPtT(arc)) && (this.findTransitionFromReference(arc.target) == transition)) {
-          let placeState = this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.source));
-          placeState.setCurrentTokenNumber(placeState.getCurrentTokenNumber() - arc.weight);
-          let k = arc.weight;
-          for (let i = this.tokensState.length - 1; i >= 0; i--) {
-            if (k != 0) {
-              if (this.tokensState[i].getPosition() == placeState) {
-                this.tokensState[i].unSet();
-                this.tokensState.splice(i, 1);
-                k = k - 1;
-              }
-            } else {
-              break;
-            }
-          }
+          this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.source)).removeTokens(arc.weight);
         }
 
         // Arc Transition to Place
         if ((isArcTtP(arc)) && (this.findTransitionFromReference(arc.source) == transition)) {
-          let placeState = this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.target));
-          placeState.setCurrentTokenNumber(placeState.getCurrentTokenNumber() + arc.weight);
-          for (let i = 0; i < arc.weight; i++) {
-            this.tokensState.push(new TokenState(this, placeState, transition));
-          }
+          this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.target)).addTokens(arc.weight, transition);
         }
-
       }
       this.currentNumberIterations = this.currentNumberIterations + 1;
     }
-  }
-}
-
-/**
- * A class representing moveable Tokens
- */
-export class TokenState {
-  private petrinet: PetriNetState;
-  private position: PlaceState | null;
-  private source: string;
-
-  constructor(petrinet: PetriNetState, position?: PlaceState, source?: Transition) {
-    this.petrinet = petrinet;
-    if ((source) && (position)) {
-      this.position = position;
-      this.source = source.name;
-    } else {
-      if (source) {
-        this.position = null;
-        this.source = source.name;
-      } if (position) {
-        this.position = position;
-        this.source = "initial state";
-      } else {
-        this.position = null;
-        this.source = "null";
-      }
-    }
-
-  }
-
-  // Getters
-  getPetrinet(): PetriNetState {
-    return this.petrinet;
-  }
-  getSource(): string {
-    return this.source;
-  }
-  getPosition(): PlaceState | null {
-    return this.position;
-  }
-
-  /**
-   * Will set the token to the place, change the current position
-   * @param pos is the place where the token is currently
-   */
-  set(pos: PlaceState, source: TransitionState): void {
-    this.position = pos;
-    this.source = source.getTransition().name;
-  }
-
-  /**
-   * Will unset the token to the place it is currently in, remove the current position
-   */
-  unSet(): void {
-    this.position = null;
-    this.source = "null";
   }
 }
 
@@ -242,12 +160,12 @@ export class TokenState {
 export class PlaceState {
   private petrinetState: PetriNetState;
   private place: Place;
-  private currentTokenNumber: number;
+  private everyTokens: Array<string> = [];
 
-  constructor(petrinet: PetriNetState, place: Place, currentTokenNumber?: number) {
+  constructor(petrinet: PetriNetState, place: Place, currentTokenNumber: number) {
     this.petrinetState = petrinet;
     this.place = place;
-    this.currentTokenNumber = currentTokenNumber || 0;
+    for (let i = 0; i < currentTokenNumber; i++) this.everyTokens.push("initial state");
   }
 
   // Getters
@@ -260,15 +178,24 @@ export class PlaceState {
   getMaxCapacity(): number {
     return this.place.maxCapacity;
   }
+  getEveryTokens(): Array<string> {
+    return this.everyTokens;
+  }
   getCurrentTokenNumber(): number {
-    return this.currentTokenNumber;
+    return this.everyTokens.length;
   }
 
-  // Setters
-  setCurrentTokenNumber(nbToken: number): void {
-    this.currentTokenNumber = nbToken;
+  // Adder
+  addTokens(n: number, source: Transition): void {
+    for (let i = 0; i < n; i++) this.everyTokens.push("From " + source.name);
+  }
+
+  // Remover
+  removeTokens(n: number): void {
+    this.everyTokens.splice(0, n);
   }
 }
+
 
 export class TransitionState {
   private petrinetState: PetriNetState;

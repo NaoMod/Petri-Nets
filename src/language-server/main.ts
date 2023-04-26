@@ -35,11 +35,7 @@ async function run(fileName: string): Promise<void> {
   for (let place of petrinetState.getPlaces()) {
     console.log();
     console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let i = 0; i < petrinetState.getTokens().length; i++) {
-      if (petrinetState.getTokens()[i].getPosition() == place) {
-        console.log(petrinetState.getTokens()[i] + " , ");
-      }
-    }
+    console.log(place.getEveryTokens());
     console.log();
   }
 
@@ -52,11 +48,7 @@ async function run(fileName: string): Promise<void> {
   for (let place of petrinetState.getPlaces()) {
     console.log();
     console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let i = 0; i < petrinetState.getTokens().length; i++) {
-      if (petrinetState.getTokens()[i].getPosition() == place) {
-        console.log(petrinetState.getTokens()[i] + " , ");
-      }
-    }
+    console.log(place.getEveryTokens());
     console.log();
   }
 
@@ -69,11 +61,7 @@ async function run(fileName: string): Promise<void> {
   for (let place of petrinetState.getPlaces()) {
     console.log();
     console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let i = 0; i < petrinetState.getTokens().length; i++) {
-      if (petrinetState.getTokens()[i].getPosition() == place) {
-        console.log(petrinetState.getTokens()[i] + " , ");
-      }
-    }
+    console.log(place.getEveryTokens());
     console.log();
   }
 
