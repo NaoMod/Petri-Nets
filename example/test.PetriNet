@@ -1,30 +1,23 @@
 PetriNet test :
 
     Place P1 :
-        8,
-        4
+        Capacity : 8,
+        Initial token number : 4
     end
 
     Place P2 :
-        3,
-        0
+        Capacity : 3,
+        Initial token number : 0
     end
-
-    Token tok1 in P1
-    Token tok2 in P1
-    Token tok3 in P1
-    Token tok4 in P1
 
     Transition T1
 
     Arc A1 :
         P1 -> T1,
-        2
+        Weight : 2
     end
 
     Arc A2 :
         T1 -> P2,
-        1
+        Weight : 1
     end
-
-    Evolution test
