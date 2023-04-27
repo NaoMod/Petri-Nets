@@ -111,20 +111,22 @@ export class PetriNetState {
   public canEvolve(): boolean {
     let canEvolve: boolean = false;
     let res: boolean = false;
-    for (let transitionState of this.transitionsState) {
-      res = false;
-      for (let arc of this.petrinet.arcs) {
-        if ((isArcPtT(arc)) && (transitionState == this.findTransitionStateFromTransition(this.findTransitionFromReference(arc.target)))) {
-          if (this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.source)).getCurrentTokenNumber() >= arc.weight) res = true;
-          else { res = false; break; }
-        } if ((isArcTtP(arc)) && (transitionState == this.findTransitionStateFromTransition(this.findTransitionFromReference(arc.source)))) {
-          let placeSt = this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.target));
-          if (placeSt.getMaxCapacity() >= placeSt.getCurrentTokenNumber() + arc.weight) res = true;
-          else { res = false; break; }
+    if (this.currentNumberIterations <= this.maxIterations) {
+      for (let transitionState of this.transitionsState) {
+        res = false;
+        for (let arc of this.petrinet.arcs) {
+          if ((isArcPtT(arc)) && (transitionState == this.findTransitionStateFromTransition(this.findTransitionFromReference(arc.target)))) {
+            if (this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.source)).getCurrentTokenNumber() >= arc.weight) res = true;
+            else { res = false; break; }
+          } if ((isArcTtP(arc)) && (transitionState == this.findTransitionStateFromTransition(this.findTransitionFromReference(arc.source)))) {
+            let placeSt = this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.target));
+            if (placeSt.getMaxCapacity() >= placeSt.getCurrentTokenNumber() + arc.weight) res = true;
+            else { res = false; break; }
+          }
         }
+        transitionState.setDoable(res);
+        if (res) canEvolve = true;
       }
-      transitionState.setDoable(res);
-      if (res) canEvolve = true;
     }
     return canEvolve;
   }

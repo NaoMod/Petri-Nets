@@ -30,6 +30,40 @@ async function main() {
   makeMockRequest(client);
 }
 
+/**
+ * Will continue to trigger transitions until it's not possible anymore
+ * 
+ * @param petrinetState , the petrinet to evolve
+ */
+function completeEvolution(petrinetState: PetriNetState) {
+  console.log("1 : Base");
+  for (let place of petrinetState.getPlaces()) {
+    console.log();
+    console.log("    Tokens in place " + place.getPlace().name + " : ");
+    for (let tok of place.getEveryTokens()) {
+      console.log(tok.getSource());
+    }
+    console.log();
+  }
+  let i = 2;
+  while (petrinetState.canEvolve()) {
+    console.log("------------------------------------------------------------------------");
+
+    console.log(i + " : Trigger");
+    petrinetState.trigger();
+    for (let place of petrinetState.getPlaces()) {
+      console.log();
+      console.log("    Tokens in place " + place.getPlace().name + " : ");
+      for (let tok of place.getEveryTokens()) {
+        console.log(tok.getSource());
+      }
+      console.log();
+    }
+    i++;
+  }
+}
+
+
 async function parse(fileName: string) {
   const services = createPetriNetServices(NodeFileSystem).PetriNet;
   return await extractAstNode<PetriNet>(fileName, services);
@@ -51,43 +85,7 @@ export async function run(fileName: string): Promise<void> {
 
   console.log("------------------------------------------------------------------------");
 
-  console.log("1 : Base");
-  for (let place of petrinetState.getPlaces()) {
-    console.log();
-    console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let tok of place.getEveryTokens()) {
-      console.log(tok.getSource());
-    }
-    console.log();
-  }
-
-  console.log("------------------------------------------------------------------------");
-
-  console.log("2 : Trigger");
-  petrinetState.trigger();
-  for (let place of petrinetState.getPlaces()) {
-    console.log();
-    console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let tok of place.getEveryTokens()) {
-      console.log(tok.getSource());
-    }
-    console.log();
-  }
-
-  console.log("------------------------------------------------------------------------");
-
-  console.log("3 : Trigger");
-  petrinetState.trigger();
-  for (let place of petrinetState.getPlaces()) {
-    console.log();
-    console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let tok of place.getEveryTokens()) {
-      console.log(tok.getSource());
-    }
-    console.log();
-  }
-
-  console.log("------------------------------------------------------------------------");
+  completeEvolution(petrinetState);
 }
 
 main();
