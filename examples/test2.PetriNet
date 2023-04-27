@@ -7,25 +7,34 @@ PetriNet test2 :
 
     Place P2 :
         Capacity : 8,
-        Initial token number : 0
+        Initial token number : 1
     end
 
     Place P3 :
         Capacity : 8,
-        Initial token number : 2
+        Initial token number : 0
     end
 
     Place P4 :
-        Capacity : 400,
-        Initial token number : 1
+        Capacity : 8,
+        Initial token number : 0
+    end
+
+    Place P5 :
+        Capacity : 8,
+        Initial token number : 0
     end
 
     Transition T1
 
     Transition T2
 
+    Transition T3
+    
+    Transition T4
+
     Arc A1 :
-        P1 -> T1,
+        T1 -> P1,
         Weight : 1
     end
 
@@ -35,26 +44,41 @@ PetriNet test2 :
     end
 
     Arc A3 :
-        T1 -> P3,
+        T2 -> P3,
         Weight : 1
     end
 
     Arc A4 :
-        P2 -> T2,
+        T3 -> P4,
         Weight : 1
     end
 
     Arc A5 :
-        P3 -> T2,
+        T4 -> P5,
         Weight : 1
     end
 
     Arc A6 :
-        T2 -> P4,
+        P1 -> T2,
         Weight : 1
     end
 
     Arc A7 :
-        T2 -> P1,
+        P2 -> T3,
+        Weight : 1
+    end
+
+    Arc A8 :
+        P3 -> T4,
+        Weight : 1
+    end
+
+    Arc A9 :
+        P4 -> T4,
+        Weight : 1
+    end
+
+    Arc A10 :
+        P5 -> T1,
         Weight : 1
     end
