@@ -3,8 +3,8 @@ import { BrowserMessageReader, BrowserMessageWriter, createConnection, Diagnosti
 import { createPetriNetServices } from './petri-net-module';
 
 /* browser specific setup code */
-const messageReader = new BrowserMessageReader(this);
-const messageWriter = new BrowserMessageWriter(this);
+const messageReader = new BrowserMessageReader(self);
+const messageWriter = new BrowserMessageWriter(self);
 
 const connection = createConnection(messageReader, messageWriter);
 

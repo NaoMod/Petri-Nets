@@ -3,6 +3,9 @@ import { PetriNet } from './generated/ast';
 import { createPetriNetServices } from './petri-net-module';
 import { PetriNetState } from './runtimeState';
 import { NodeFileSystem } from 'langium/node';
+import { startServer } from './server';
+import { createClient, makeMockRequest } from './client';
+import { Client } from 'jayson';
 
 /* // Create a connection to the client
 const connection = createConnection(ProposedFeatures.all);
@@ -12,6 +15,20 @@ const { shared } = createPetriNetServices({ connection, ...NodeFileSystem });
 
 // Start the language server with the shared services
 startLanguageServer(shared); */
+
+const PORT: number = 49152;
+
+async function main() {
+  startServer(PORT);
+
+  //wait for server to start
+  await new Promise<void>(resolve => setTimeout(() => {
+    resolve()
+  }, 2000));
+
+  const client: Client = createClient(PORT);
+  makeMockRequest(client);
+}
 
 async function parse(fileName: string) {
   const services = createPetriNetServices(NodeFileSystem).PetriNet;
@@ -23,11 +40,14 @@ async function parse(fileName: string) {
  * 
  * @param fileName, the name of the file to run
  */
-async function run(fileName: string): Promise<void> {
+export async function run(fileName: string): Promise<void> {
 
   const petrinet = parse(fileName);
   let petrinetState: PetriNetState = new PetriNetState(await petrinet, 300);
 
+  console.log("------------------------------------------------------------------------");
+
+  console.log("Petri Net : " + petrinetState.getPetriNet().name);
 
   console.log("------------------------------------------------------------------------");
 
@@ -70,6 +90,4 @@ async function run(fileName: string): Promise<void> {
   console.log("------------------------------------------------------------------------");
 }
 
-
-run("/home/naomod1/Documents/Petri-Nets/example/test.PetriNet"); //Need to be automatized so every file.PetriNet is runned
-
+main();
