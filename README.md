@@ -9,7 +9,11 @@ Creation of a Petri net Domain-Specific Language. Uses Langium.
 ## Examples
 
 * test1.PetriNet
-![Screenshot](test1.png)
+<p align="center">
+  <img width="370" height="113" src="test1.png">
+</p>
 
 * test2.PetriNet
-![Screenshot](test2.jpeg)
+<p align="center">
+  <img width="376" height="232" src="test2.jpeg">
+</p>
