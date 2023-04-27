@@ -15,7 +15,6 @@ function linkFile(fileName: string) {
 }
 
 function requestClient(client: Client) {
-    console.log(filesConst);
     client.request(
         'execute', filesConst, (err, error, result) => {
             if (error) throw new Error(error?.message);
@@ -23,7 +22,6 @@ function requestClient(client: Client) {
 
             console.log(`PetriNet: ${result}`);
         });
-    console.log("Après request");
 }
 
 export function makeMockRequest(client: Client): void {

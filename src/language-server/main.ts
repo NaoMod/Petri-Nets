@@ -39,10 +39,7 @@ function completeEvolution(petrinetState: PetriNetState) {
   console.log("1 : Base");
   for (let place of petrinetState.getPlaces()) {
     console.log();
-    console.log("    Tokens in place " + place.getPlace().name + " : ");
-    for (let tok of place.getEveryTokens()) {
-      console.log(tok.getSource());
-    }
+    console.log("    Tokens in place " + place.getPlace().name + " : " + place.getCurrentTokenNumber());
     console.log();
   }
   let i = 2;
@@ -53,10 +50,7 @@ function completeEvolution(petrinetState: PetriNetState) {
     petrinetState.trigger();
     for (let place of petrinetState.getPlaces()) {
       console.log();
-      console.log("    Tokens in place " + place.getPlace().name + " : ");
-      for (let tok of place.getEveryTokens()) {
-        console.log(tok.getSource());
-      }
+      console.log("    Tokens in place " + place.getPlace().name + " : " + place.getCurrentTokenNumber());
       console.log();
     }
     i++;
@@ -77,7 +71,7 @@ async function parse(fileName: string) {
 export async function run(fileName: string): Promise<void> {
 
   const petrinet = parse(fileName);
-  let petrinetState: PetriNetState = new PetriNetState(await petrinet, 300);
+  let petrinetState: PetriNetState = new PetriNetState(await petrinet, 50);
 
   console.log("------------------------------------------------------------------------");
 
