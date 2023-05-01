@@ -27,7 +27,7 @@ function requestClient(client: Client) {
 export function makeMockRequest(client: Client): void {
     const path = require('path');
     const fs = require('fs');
-    const directoryPath = path.join(__dirname, '../../examples');
+    const directoryPath = path.join(__dirname, '../examples');
     fs.readdir(directoryPath, function (err: Error | null | undefined, files: Array<string>, client: Client) {
         //handling error
         if (err) {
