@@ -1,5 +1,5 @@
 import { Server } from 'jayson';
-import { run } from './main';
+import { run } from '../main';
 
 
 export function startServer(port: number): void {

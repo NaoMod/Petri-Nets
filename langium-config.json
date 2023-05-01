@@ -2,11 +2,11 @@
     "projectName": "PetriNet",
     "languages": [{
         "id": "petri-net",
-        "grammar": "src/language-server/petri-net.langium",
+        "grammar": "src/petri-net.langium",
         "fileExtensions": [".PetriNet"],
         "textMate": {
             "out": "syntaxes/petri-net.tmLanguage.json"
         }
     }],
-    "out": "src/language-server/generated"
+    "out": "src/generated"
 }

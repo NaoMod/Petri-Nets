@@ -1,9 +1,9 @@
-import { extractAstNode } from '../cli/cli-util';
+import { extractAstNode } from './parse-util';
 import { PetriNet } from './generated/ast';
 import { createPetriNetServices } from './petri-net-module';
 import { PetriNetState } from './runtimeState';
 import { NodeFileSystem } from 'langium/node';
-import { startServer } from './server';
+import { startServer } from './server/server';
 import { createClient, makeMockRequest } from './client';
 import { Client } from 'jayson';
 
