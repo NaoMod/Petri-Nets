@@ -111,7 +111,7 @@ export class PetriNetState {
   public canEvolve(): boolean {
     let canEvolve: boolean = false;
     let res: boolean = false;
-    if (this.currentNumberIterations <= this.maxIterations) {
+    if (this.currentNumberIterations < this.maxIterations) {
       for (let transitionState of this.transitionsState) {
         res = false;
         for (let arc of this.petrinet.arcs) {
