@@ -25,6 +25,7 @@ function requestClient(client: Client) {
 }
 
 export function makeMockRequest(client: Client): void {
+    serverClient = client;
     const path = require('path');
     const fs = require('fs');
     const directoryPath = path.join(__dirname, '../examples');
@@ -35,11 +36,10 @@ export function makeMockRequest(client: Client): void {
         }
         //listing all files using forEach
         files.forEach(function (file) {
-            // Do whatever you want to do with the file
+            // Listing the path to the file in a global constant
             let filePath = directoryPath + "/" + file;
             linkFile(filePath);
         });
         requestClient(serverClient);
     });
-    serverClient = client;
 }

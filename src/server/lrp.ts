@@ -8,7 +8,7 @@ export interface LRPServices {
      * 
      * @param args 
      */
-    parse(args: ParseArguments): ParseResponse;
+    parse(args: ParseArguments): Promise<ParseResponse>;
 
     /**
      * Creates a new runtime state for a given source file and stores it.
