@@ -8,7 +8,7 @@ Creation of a Petri net Domain-Specific Language. Uses Langium.
 
 ## Project's syntax
 <p align="center">
-  <img width="3378" height="1224" src="images/UML-diagram.png">
+  <img width="675" height="248" src="images/UML-diagram.png">
 </p>
 
 ## Examples
