@@ -6,6 +6,11 @@ Creation of a Petri net Domain-Specific Language. Uses Langium.
 * TypeScript
 * Langium
 
+## Project's syntax
+<p align="center">
+  <img width="438" height="158" src="images/UML-diagram.png">
+</p>
+
 ## Examples
 
 * test1.PetriNet
