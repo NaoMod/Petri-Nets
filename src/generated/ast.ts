@@ -6,47 +6,21 @@
 /* eslint-disable */
 import { AstNode, AbstractAstReflection, Reference, ReferenceInfo, TypeMetaData } from 'langium';
 
-export type Arc = ArcPtT | ArcTtP;
-
-export const Arc = 'Arc';
-
-export function isArc(item: unknown): item is Arc {
-    return reflection.isInstance(item, Arc);
-}
-
-export interface ArcPtT extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'ArcPtT';
-    name: string
-    source: Reference<Place>
-    target: Reference<Transition>
+export interface Edge extends AstNode {
+    readonly $container: Transition;
+    readonly $type: 'Edge';
+    place: Reference<Place>
     weight: number
 }
 
-export const ArcPtT = 'ArcPtT';
+export const Edge = 'Edge';
 
-export function isArcPtT(item: unknown): item is ArcPtT {
-    return reflection.isInstance(item, ArcPtT);
-}
-
-export interface ArcTtP extends AstNode {
-    readonly $container: PetriNet;
-    readonly $type: 'ArcTtP';
-    name: string
-    source: Reference<Transition>
-    target: Reference<Place>
-    weight: number
-}
-
-export const ArcTtP = 'ArcTtP';
-
-export function isArcTtP(item: unknown): item is ArcTtP {
-    return reflection.isInstance(item, ArcTtP);
+export function isEdge(item: unknown): item is Edge {
+    return reflection.isInstance(item, Edge);
 }
 
 export interface PetriNet extends AstNode {
     readonly $type: 'PetriNet';
-    arcs: Array<Arc>
     name: string
     places: Array<Place>
     transitions: Array<Transition>
@@ -75,7 +49,9 @@ export function isPlace(item: unknown): item is Place {
 export interface Transition extends AstNode {
     readonly $container: PetriNet;
     readonly $type: 'Transition';
+    destinations: Array<Edge>
     name: string
+    sources: Array<Edge>
 }
 
 export const Transition = 'Transition';
@@ -85,9 +61,7 @@ export function isTransition(item: unknown): item is Transition {
 }
 
 export interface PetriNetAstType {
-    Arc: Arc
-    ArcPtT: ArcPtT
-    ArcTtP: ArcTtP
+    Edge: Edge
     PetriNet: PetriNet
     Place: Place
     Transition: Transition
@@ -96,15 +70,11 @@ export interface PetriNetAstType {
 export class PetriNetAstReflection extends AbstractAstReflection {
 
     getAllTypes(): string[] {
-        return ['Arc', 'ArcPtT', 'ArcTtP', 'PetriNet', 'Place', 'Transition'];
+        return ['Edge', 'PetriNet', 'Place', 'Transition'];
     }
 
     protected override computeIsSubtype(subtype: string, supertype: string): boolean {
         switch (subtype) {
-            case ArcPtT:
-            case ArcTtP: {
-                return this.isSubtype(Arc, supertype);
-            }
             default: {
                 return false;
             }
@@ -114,13 +84,8 @@ export class PetriNetAstReflection extends AbstractAstReflection {
     getReferenceType(refInfo: ReferenceInfo): string {
         const referenceId = `${refInfo.container.$type}:${refInfo.property}`;
         switch (referenceId) {
-            case 'ArcPtT:source':
-            case 'ArcTtP:target': {
+            case 'Edge:place': {
                 return Place;
-            }
-            case 'ArcPtT:target':
-            case 'ArcTtP:source': {
-                return Transition;
             }
             default: {
                 throw new Error(`${referenceId} is not a valid reference id.`);
@@ -134,9 +99,17 @@ export class PetriNetAstReflection extends AbstractAstReflection {
                 return {
                     name: 'PetriNet',
                     mandatory: [
-                        { name: 'arcs', type: 'array' },
                         { name: 'places', type: 'array' },
                         { name: 'transitions', type: 'array' }
+                    ]
+                };
+            }
+            case 'Transition': {
+                return {
+                    name: 'Transition',
+                    mandatory: [
+                        { name: 'destinations', type: 'array' },
+                        { name: 'sources', type: 'array' }
                     ]
                 };
             }

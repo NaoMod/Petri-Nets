@@ -25,60 +25,22 @@ PetriNet test2 :
         Initial token number : 0
     end
 
-    Transition T1
+    Transition T1 : 
+        From P5, weight : 1
+        To P1, weight : 1 and P2, weight : 1
+    end
 
-    Transition T2
+    Transition T2 :
+        From P1, weight : 1
+        To P3, weight : 1
+    end
 
-    Transition T3
+    Transition T3 :
+        From P2, weight : 1
+        To P4, weight : 1
+    end
     
-    Transition T4
-
-    Arc A1 :
-        T1 -> P1,
-        Weight : 1
-    end
-
-    Arc A2 :
-        T1 -> P2,
-        Weight : 1
-    end
-
-    Arc A3 :
-        T2 -> P3,
-        Weight : 1
-    end
-
-    Arc A4 :
-        T3 -> P4,
-        Weight : 1
-    end
-
-    Arc A5 :
-        T4 -> P5,
-        Weight : 1
-    end
-
-    Arc A6 :
-        P1 -> T2,
-        Weight : 1
-    end
-
-    Arc A7 :
-        P2 -> T3,
-        Weight : 1
-    end
-
-    Arc A8 :
-        P3 -> T4,
-        Weight : 1
-    end
-
-    Arc A9 :
-        P4 -> T4,
-        Weight : 1
-    end
-
-    Arc A10 :
-        P5 -> T1,
-        Weight : 1
+    Transition T4 :
+        From P3, weight : 1 and P4, weight : 1
+        To P5, weight : 1
     end

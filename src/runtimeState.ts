@@ -1,6 +1,50 @@
 
 import { Reference } from 'langium';
-import { PetriNet, Place, Transition, isArcPtT, isArcTtP } from './generated/ast';
+import { PetriNet, Place, Transition } from './generated/ast';
+
+/**
+   * Return the place corresponding to a reference
+   * 
+   * @param refPlace, the place's reference
+   * @param petrinet, the petrinet containing the place's reference
+   * @returns the corresponding place
+   */
+export function findPlaceFromReference(refPlace: Reference<Place>, petrinet: PetriNet): Place {
+  let plc: Place = petrinet.places[0];
+  for (let place of petrinet.places) {
+    if (place === refPlace.ref) return place;
+  }
+  return plc;
+}
+
+/**
+   * Return the transition corresponding to a reference
+   * 
+   * @param refTransition, the transition's reference
+   * @returns the corresponding transition
+   */
+export function findTransitionFromReference(refTransition: Reference<Transition>, petrinet: PetriNet): Transition {
+  let trnst: Transition = petrinet.transitions[0];
+  for (let transition of petrinet.transitions) {
+    if (transition === refTransition.ref) return transition;
+  }
+  return trnst;
+}
+
+/**
+  * Return the placeState corresponding to a place
+  * 
+  * @param refPlace, the place's reference
+  * @returns the corresponding place
+  */
+function findPlaceStateFromPlace(place: Place, petrinet: PetriNetState): PlaceState {
+  let plc: PlaceState = petrinet.getPlaces()[0];
+  for (let placeState of petrinet.getPlaces()) {
+    if (placeState.getPlace() == place) return placeState;
+  }
+  return plc;
+}
+
 
 export class PetriNetState {
   private petrinet: PetriNet;
@@ -30,63 +74,12 @@ export class PetriNetState {
   public getPlaces(): Array<PlaceState> {
     return this.placesState;
   }
-
-
-  /**
-   * Return the place corresponding to a reference
-   * 
-   * @param refPlace, the place's reference
-   * @returns the corresponding place
-   */
-  public findPlaceFromReference(refPlace: Reference<Place>): Place {
-    let plc: Place = this.petrinet.places[0];
-    for (let place of this.petrinet.places) {
-      if (place === refPlace.ref) return place;
-    }
-    return plc;
+  public getTransitions(): Array<TransitionState> {
+    return this.transitionsState;
   }
 
-  /**
-   * Return the placeState corresponding to a place
-   * 
-   * @param refPlace, the place's reference
-   * @returns the corresponding place
-   */
-  public findPlaceStateFromPlace(place: Place): PlaceState {
-    let plc: PlaceState = this.placesState[0];
-    for (let placeState of this.placesState) {
-      if (placeState.getPlace() == place) return placeState;
-    }
-    return plc;
-  }
 
-  /**
-   * Return the transition corresponding to a reference
-   * 
-   * @param refTransition, the transition's reference
-   * @returns the corresponding transition
-   */
-  public findTransitionFromReference(refTransition: Reference<Transition>): Transition {
-    let trnst: Transition = this.petrinet.transitions[0];
-    for (let transition of this.petrinet.transitions) {
-      if (transition === refTransition.ref) return transition;
-    }
-    return trnst;
-  }
 
-  /**
-   * Return the transition corresponding to a reference
-   * 
-   * @param refTransition, the transition's reference
-   * @returns the corresponding transition
-   */
-  public findTransitionStateFromTransition(transition: Transition): TransitionState {
-    let trnst: TransitionState = this.transitionsState[0];
-    for (let transitionState of this.transitionsState) {
-      if (transitionState.getTransition() === transition) return transitionState;
-    }
-    return trnst;
-  }
 
   /**
    * Will find the next triggerable Transition
@@ -109,26 +102,14 @@ export class PetriNetState {
    * @return true if there is a triggerable transition
    */
   public canEvolve(): boolean {
-    let canEvolve: boolean = false;
-    let res: boolean = false;
     if (this.currentNumberIterations < this.maxIterations) {
       for (let transitionState of this.transitionsState) {
-        res = false;
-        for (let arc of this.petrinet.arcs) {
-          if ((isArcPtT(arc)) && (transitionState == this.findTransitionStateFromTransition(this.findTransitionFromReference(arc.target)))) {
-            if (this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.source)).getCurrentTokenNumber() >= arc.weight) res = true;
-            else { res = false; break; }
-          } if ((isArcTtP(arc)) && (transitionState == this.findTransitionStateFromTransition(this.findTransitionFromReference(arc.source)))) {
-            let placeSt = this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.target));
-            if (placeSt.getMaxCapacity() >= placeSt.getCurrentTokenNumber() + arc.weight) res = true;
-            else { res = false; break; }
-          }
+        if (transitionState.isDoable()) {
+          return true;
         }
-        transitionState.setDoable(res);
-        if (res) canEvolve = true;
       }
     }
-    return canEvolve;
+    return false;;
   }
 
   /**
@@ -136,25 +117,21 @@ export class PetriNetState {
    * 
    * @param tokens, every token existing
    */
-  public trigger(): void {
+  public trigger(): boolean {
+    let transition = this.getNextTriggerableTransition();
 
-    if (this.currentNumberIterations <= this.maxIterations) {
-      let transition = this.getNextTriggerableTransition();
+    if (transition != null) {
+      for (let source of transition.sources) {
+        findPlaceStateFromPlace(findPlaceFromReference(source.place, this.petrinet), this).removeTokens(source.weight);
 
-      for (let arc of this.petrinet.arcs) {
-
-        // Arc Place to Transition
-        if ((isArcPtT(arc)) && (this.findTransitionFromReference(arc.target) == transition)) {
-          this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.source)).removeTokens(arc.weight);
-        }
-
-        // Arc Transition to Place
-        if ((isArcTtP(arc)) && (this.findTransitionFromReference(arc.source) == transition)) {
-          this.findPlaceStateFromPlace(this.findPlaceFromReference(arc.target)).addTokens(arc.weight, transition);
-        }
+      }
+      for (let destination of transition.destinations) {
+        findPlaceStateFromPlace(findPlaceFromReference(destination.place, this.petrinet), this).addTokens(destination.weight, transition);
       }
       this.currentNumberIterations = this.currentNumberIterations + 1;
+      return true;
     }
+    return false;
   }
 }
 
@@ -238,5 +215,27 @@ export class TransitionState {
   // Setters
   setDoable(res: boolean): void {
     this.doable = res;
+  }
+
+  isDoable(): boolean {
+    let res = true;
+    for (let source of this.transition.sources) {
+      let place = findPlaceStateFromPlace(findPlaceFromReference(source.place, this.petrinetState.getPetriNet()), this.petrinetState);
+      if (source.weight > place.getCurrentTokenNumber()) {
+        res = false;
+        break;
+      }
+    }
+    if (res) {
+      for (let destination of this.transition.destinations) {
+        let place = findPlaceStateFromPlace(findPlaceFromReference(destination.place, this.petrinetState.getPetriNet()), this.petrinetState)
+        if (place.getCurrentTokenNumber() + destination.weight > place.getMaxCapacity()) {
+          res = false;
+          break;
+        }
+      }
+    }
+    this.setDoable(res);
+    return res;
   }
 }

@@ -2,32 +2,22 @@ grammar PetriNet
 
 entry PetriNet: 
     'PetriNet' name=ID ':'
-    (places+=Place|transitions+=Transition|arcs+=Arc)*;
+    (places+=Place|transitions+=Transition)*;
 
 Transition:
-    'Transition' name=NameTrans ;
+    'Transition' name=NameTrans ':'
+        'From' sources+=Edge ('and' sources+=Edge)*
+        'To' destinations+=Edge ('and' destinations+=Edge)*
+    'end';
+
+Edge:
+    place=[Place:NamePlace] ',' 'weight' ':' weight=INT;
 
 Place: 
     'Place' name=NamePlace ':'
         'Capacity' ':'maxCapacity=INT ',' 
         'Initial' 'token' 'number' ':' initialTokenNumber=INT 
     'end';
-
-Arc: 
-    ArcPtT | ArcTtP;
-    
-ArcPtT:
-    'Arc' name=NameArc ':'
-        source=[Place:NamePlace] '->' target=[Transition:NameTrans] ',' 
-        'Weight' ':' weight=INT 
-    'end';
-
-ArcTtP:
-    'Arc' name=NameArc ':'
-        source=[Transition:NameTrans] '->' target=[Place:NamePlace] ',' 
-        'Weight' ':' weight=INT 
-    'end';
-
 
 // Ignore white spaces
 hidden terminal WS: /\s+/;

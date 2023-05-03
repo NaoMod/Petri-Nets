@@ -10,7 +10,7 @@
     },
     {
       "name": "keyword.control.petri-net",
-      "match": "\\b(Arc|Capacity|Initial|PetriNet|Place|Transition|Weight|end|number|token)\\b"
+      "match": "\\b(Capacity|From|Initial|PetriNet|Place|To|Transition|and|end|number|token|weight)\\b"
     }
   ],
   "repository": {
