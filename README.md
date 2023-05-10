@@ -5,6 +5,7 @@ Creation of a Petri net Domain-Specific Language. Uses Langium.
 * Node.js
 * TypeScript
 * Langium
+* Jest
 
 ## Project's syntax
 <p align="center">
