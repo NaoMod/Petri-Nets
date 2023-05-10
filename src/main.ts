@@ -7,15 +7,6 @@ import { startServer } from './server/server';
 import { createClient, makeMockRequest } from './client';
 import { Client } from 'jayson';
 
-/* // Create a connection to the client
-const connection = createConnection(ProposedFeatures.all);
-
-// Inject the shared services and language-specific services
-const { shared } = createPetriNetServices({ connection, ...NodeFileSystem });
-
-// Start the language server with the shared services
-startLanguageServer(shared); */
-
 const PORT: number = 49152;
 
 async function main() {
@@ -56,7 +47,6 @@ function completeEvolution(petrinetState: PetriNetState) {
     i++;
   }
 }
-
 
 async function parse(fileName: string) {
   const services = createPetriNetServices(NodeFileSystem).PetriNet;

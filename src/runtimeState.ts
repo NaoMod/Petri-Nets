@@ -77,6 +77,9 @@ export class PetriNetState {
   public getTransitions(): Array<TransitionState> {
     return this.transitionsState;
   }
+  public getMaxIterations(): number {
+    return this.maxIterations;
+  }
 
 
 

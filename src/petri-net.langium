@@ -25,7 +25,6 @@ hidden terminal WS: /\s+/;
 // Read a 'variable', here can be a letter followed by at least one number
 terminal NamePlace: /[_P][0-9]+/;
 terminal NameTrans: /[_T][0-9]+/; 
-terminal NameArc: /[_A][0-9]+/;
 terminal ID: /[_a-zA-Z][\w_]*/;
 
 terminal INT returns number: /[0-9]+/;
