@@ -6,8 +6,8 @@ entry PetriNet:
 
 Transition:
     'Transition' name=NameTrans ':'
-        'From' sources+=Edge ('and' sources+=Edge)*
-        'To' destinations+=Edge ('and' destinations+=Edge)*
+        ('From' sources+=Edge ('and' sources+=Edge)*)?
+        ('To' destinations+=Edge ('and' destinations+=Edge)*)?
     'end';
 
 Edge:
