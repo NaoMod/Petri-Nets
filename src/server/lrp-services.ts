@@ -2,7 +2,7 @@ import { NodeFileSystem } from "langium/node";
 import { PetriNet, Place, Transition } from "src/generated/ast";
 import { extractAstNode } from "src/parse-util";
 import { createPetriNetServices } from "src/petri-net-module";
-import { CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, InitArguments, InitResponse, ParseArguments, ParseResponse, LRPServices, StepArguments, StepResponse, ModelElement, Location } from "./lrp";
+import { CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, InitArguments, InitResponse, ParseArguments, ParseResponse, LRPServices, StepArguments, StepResponse, ModelElement, Location, BreakpointType, PrimitiveType } from "./lrp";
 import { PetriNetState } from "src/runtimeState";
 
 
@@ -69,6 +69,7 @@ class TransitionModelElement implements ModelElement {
 export class PetriNetsLRPServices implements LRPServices {
     petrinets = new Map<string, PetriNet>();
     petrinetsState = new Map<string, PetriNetState>();
+    breakpoints = new Array<BreakpointType>();
 
     async parse(args: ParseArguments): Promise<ParseResponse> {
         this.petrinetsState.delete(args.sourceFile);
@@ -122,9 +123,36 @@ export class PetriNetsLRPServices implements LRPServices {
     }
 
     getBreakpointTypes(): GetBreakpointTypesResponse {
-        throw new Error("Method not implemented.");
+        this.breakpoints.push(
+            { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, primitiveType: PrimitiveType.NUMBER, objectType: "Place" }] },
+
+            { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, primitiveType: PrimitiveType.BOOLEAN, objectType: "Place" }] },
+
+            { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, primitiveType: PrimitiveType.BOOLEAN, objectType: "Transition" }] }
+        )
+        return { breakpointTypes: this.breakpoints };
     }
+
+
     checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse {
-        throw new Error("Method not implemented.");
+        if (!this.petrinetsState.has(args.sourceFile))
+            throw new Error("The runtime state of this file has not been initialized yet.");
+        if (this.petrinetsState.get(args.sourceFile) == undefined)
+            throw new Error("The runtime state of this file is undefined.");
+
+        switch (args.typeId) {
+            case "Place.empty": {
+                return { isActivated: true, message: "The place will be empty." };
+            }
+            case "Place.full": {
+                return { isActivated: true, message: "The place will be full." };
+            }
+            case "Transition.trigger": {
+                return { isActivated: true, message: "The transition is about to be triggered." };
+            }
+            default: {
+                throw new Error("This breakpoint id does not exist : " + args.typeId);
+            }
+        }
     }
 }
