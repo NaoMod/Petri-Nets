@@ -69,17 +69,12 @@ class TransitionModelElement implements ModelElement {
 export class PetriNetsLRPServices implements LRPServices {
     petrinets = new Map<string, PetriNet>();
     petrinetsState = new Map<string, PetriNetState>();
-    breakpoints = new Array<BreakpointType>();
+    breakpoints: Array<BreakpointType> = [
+        { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+        { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+        { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, objectType: "Transition" }] }
+    ];
 
-    createBreakpoints(): void {
-        this.breakpoints.push(
-            { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-
-            { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-
-            { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, objectType: "Transition" }] }
-        )
-    }
 
     async parse(args: ParseArguments): Promise<ParseResponse> {
         this.petrinetsState.delete(args.sourceFile);
@@ -133,9 +128,6 @@ export class PetriNetsLRPServices implements LRPServices {
     }
 
     getBreakpointTypes(): GetBreakpointTypesResponse {
-        if (this.breakpoints.length == 0) {
-            this.createBreakpoints();
-        }
         return { breakpointTypes: this.breakpoints };
     }
 
