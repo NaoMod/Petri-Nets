@@ -2,8 +2,8 @@ import { NodeFileSystem } from "langium/node";
 import { PetriNet, Place, Transition } from "src/generated/ast";
 import { extractAstNode } from "src/parse-util";
 import { createPetriNetServices } from "src/petri-net-module";
-import { CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, InitArguments, InitResponse, ParseArguments, ParseResponse, LRPServices, StepArguments, StepResponse, ModelElement, Location, BreakpointType, PrimitiveType } from "./lrp";
 import { PetriNetState } from "src/runtimeState";
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, InitArguments, InitResponse, LRPServices, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
 
 
 class PetriNetModelElement implements ModelElement {
@@ -94,7 +94,7 @@ export class PetriNetsLRPServices implements LRPServices {
         if (petrinet == undefined)
             throw new Error("The petri net of this file is undefined.");
 
-        this.petrinetsState.set(args.sourceFile, new PetriNetState(petrinet, 50));
+        this.petrinetsState.set(args.sourceFile, new PetriNetState(petrinet));
         return { isExecutionDone: true };
     }
 

@@ -48,14 +48,13 @@ function findPlaceStateFromPlace(place: Place, petrinet: PetriNetState): PlaceSt
 
 export class PetriNetState {
   private petrinet: PetriNet;
-  private maxIterations: number;
+  private maxIterations = 50;
   private currentNumberIterations: number;
   private placesState: Array<PlaceState> = [];
   private transitionsState: Array<TransitionState> = [];
 
-  constructor(petrinet: PetriNet, maxIteration: number) {
+  constructor(petrinet: PetriNet) {
     this.petrinet = petrinet;
-    this.maxIterations = maxIteration;
     this.currentNumberIterations = 0;
 
     for (let place of petrinet.places) {

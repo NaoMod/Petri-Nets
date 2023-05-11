@@ -61,7 +61,7 @@ async function parse(fileName: string) {
 export async function run(fileName: string): Promise<void> {
 
   const petrinet = parse(fileName);
-  let petrinetState: PetriNetState = new PetriNetState(await petrinet, 50);
+  let petrinetState: PetriNetState = new PetriNetState(await petrinet);
 
   console.log("------------------------------------------------------------------------");
 
