@@ -10,14 +10,6 @@ let lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
 let fileName: string;
 let services: PetriNetServices;
 
-declare function fail(error?: any): never;
-
-/*
-function fail(message?: string) {
-    if (message) throw new Error(message);
-    throw new Error();
-}*/
-
 beforeEach(() => {
     lrpServices = new PetriNetsLRPServices();
     const directoryPath = path.join(__dirname, '../examples');
@@ -31,54 +23,70 @@ test('Parsing method test', () => {
 
         await lrpServices.parse({ sourceFile: fileName });
 
-        const TESTED_PETRI_NET = lrpServices.petrinets.get(fileName);
+        const TESTED_PETRI_NET: PetriNet | undefined = lrpServices.petrinets.get(fileName);
 
-        if (!TESTED_PETRI_NET || !EXPECTED_PETRI_NET) throw new Error();
+        if ((!TESTED_PETRI_NET) || (!EXPECTED_PETRI_NET)) throw new Error("A petri net is undefined in parsing test");
         else {
-            if (TESTED_PETRI_NET.name != EXPECTED_PETRI_NET.name) throw new Error();
+            if (TESTED_PETRI_NET.name != EXPECTED_PETRI_NET.name) throw new Error("Wrong petri net");
             for (let i = 0; i < TESTED_PETRI_NET.places.length; i++) {
-                if (TESTED_PETRI_NET.places[i] != EXPECTED_PETRI_NET.places[i]) throw new Error();
+                if (TESTED_PETRI_NET.places[i].name != EXPECTED_PETRI_NET.places[i].name) throw new Error("Wrong place");
             }
             for (let i = 0; i < TESTED_PETRI_NET.transitions.length; i++) {
-                if (TESTED_PETRI_NET.transitions[i] != EXPECTED_PETRI_NET.transitions[i]) throw new Error();
+                if (TESTED_PETRI_NET.transitions[i].name != EXPECTED_PETRI_NET.transitions[i].name) throw new Error("Wrong transition");
             }
         }
     }).not.toThrow();
 })
 
 test('Initial Execution method test', () => {
-    expect(() => {
-        lrpServices.parse({ sourceFile: fileName });
-        let petrinet = lrpServices.petrinets.get(fileName);
+    expect(async () => {
+        await lrpServices.parse({ sourceFile: fileName });
+        let petrinet: PetriNet | undefined = lrpServices.petrinets.get(fileName);
+        if (!petrinet) throw new Error("Petri net is undefined in init execution test");
+
         lrpServices.initExecution({ sourceFile: fileName });
         const TESTED_PETRI_NET_STATE = lrpServices.petrinetsState.get(fileName);
-        if (!petrinet) throw new Error();
         const EXPECTED_PETRI_NET_STATE = new PetriNetState(petrinet);
 
-        if (!TESTED_PETRI_NET_STATE || !EXPECTED_PETRI_NET_STATE) throw new Error();
+        if (!TESTED_PETRI_NET_STATE || !EXPECTED_PETRI_NET_STATE) throw new Error("A petri net state is undefined in init execution test");
         else {
-            if (TESTED_PETRI_NET_STATE.getPetriNet().name != EXPECTED_PETRI_NET_STATE.getPetriNet().name) throw new Error();
+            if (TESTED_PETRI_NET_STATE.getPetriNet().name != EXPECTED_PETRI_NET_STATE.getPetriNet().name) throw new Error("Wrong petri net");
             for (let i = 0; i < EXPECTED_PETRI_NET_STATE.getPlaces().length; i++) {
-                if (TESTED_PETRI_NET_STATE.getPlaces()[i].getMaxCapacity() != EXPECTED_PETRI_NET_STATE.getPlaces()[i].getMaxCapacity()) throw new Error();
-                if (TESTED_PETRI_NET_STATE.getPlaces()[i].getCurrentTokenNumber() != EXPECTED_PETRI_NET_STATE.getPlaces()[i].getCurrentTokenNumber()) throw new Error();
+                if (TESTED_PETRI_NET_STATE.getPlaces()[i].getMaxCapacity() != EXPECTED_PETRI_NET_STATE.getPlaces()[i].getMaxCapacity()) throw new Error("Wrong place's max capacity");
+                if (TESTED_PETRI_NET_STATE.getPlaces()[i].getCurrentTokenNumber() != EXPECTED_PETRI_NET_STATE.getPlaces()[i].getCurrentTokenNumber()) throw new Error("Wrong place's current token number");
             }
             for (let i = 0; i < EXPECTED_PETRI_NET_STATE.getTransitions().length; i++) {
-                if (TESTED_PETRI_NET_STATE.getTransitions()[i].getTransition() != EXPECTED_PETRI_NET_STATE.getTransitions()[i].getTransition()) throw new Error();
+                if (TESTED_PETRI_NET_STATE.getTransitions()[i].getTransition() != EXPECTED_PETRI_NET_STATE.getTransitions()[i].getTransition()) throw new Error("Wrong transition");
             }
         }
     }).not.toThrow();
 })
 
-/*
-test('Next Step method test', async () => {
-    const path = require('path');
-    const directoryPath = path.join(__dirname, '../examples');
-    const fileName = directoryPath + "/test.PetriNet";
-    lrpServices.parse({ sourceFile: fileName });
-    lrpServices.initExecution({ sourceFile: fileName });
-    let petrinetState = lrpServices.petrinetsState.get(fileName);
-    lrpServices.nextStep({ sourceFile: fileName });
 
-    if (!petrinetState) fail();
-    expect(lrpServices.petrinetsState.get(fileName)).toBe(petrinetState.trigger());
-}) */
+test('Next Step method test', () => {
+    expect(async () => {
+        await lrpServices.parse({ sourceFile: fileName });
+        lrpServices.initExecution({ sourceFile: fileName });
+
+        let EXPECTED_STATE: PetriNetState | undefined = lrpServices.petrinetsState.get(fileName);
+        if (!EXPECTED_STATE) throw new Error();
+
+        EXPECTED_STATE.trigger();
+
+        lrpServices.nextStep({ sourceFile: fileName });
+        const TESTED_STATE: PetriNetState | undefined = lrpServices.petrinetsState.get(fileName);
+
+        if (!TESTED_STATE || !EXPECTED_STATE) throw new Error("A petri net state is undefined in next step test");
+        else {
+            if (TESTED_STATE.getPetriNet().name != EXPECTED_STATE.getPetriNet().name)
+                throw new Error("Wrong petri net");
+            for (let i = 0; i < EXPECTED_STATE.getPlaces().length; i++) {
+                if (TESTED_STATE.getPlaces()[i].getMaxCapacity() != EXPECTED_STATE.getPlaces()[i].getMaxCapacity()) throw new Error("Wrong place's max capacity");
+                if (TESTED_STATE.getPlaces()[i].getCurrentTokenNumber() != EXPECTED_STATE.getPlaces()[i].getCurrentTokenNumber()) throw new Error("Wrong place's current token number");
+            }
+            for (let i = 0; i < EXPECTED_STATE.getTransitions().length; i++) {
+                if (TESTED_STATE.getTransitions()[i].getTransition() != EXPECTED_STATE.getTransitions()[i].getTransition()) throw new Error("Wrong transition");
+            }
+        }
+    }).not.toThrow();
+})
