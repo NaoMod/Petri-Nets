@@ -72,6 +72,8 @@ export class PetriNetsLRPServices implements LRPServices {
     breakpoints: Array<BreakpointType> = [
         { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
         { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+        { id: "Place.notEnough", name: "NumberOfTokenInfToTransitionWeight", description: "Breaks when the number of tokens in a place is inferior to the transition's weight", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+        { id: "Place.tooMany", name: "NumberOfTokenSupToMaxCapacity", description: "Breaks when the number of tokens in a place is superior to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
         { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, objectType: "Transition" }] }
     ];
 
@@ -81,17 +83,21 @@ export class PetriNetsLRPServices implements LRPServices {
 
         const services = createPetriNetServices(NodeFileSystem).PetriNet;
         let petrinet = await extractAstNode<PetriNet>(args.sourceFile, services);
+
         this.petrinets.set(args.sourceFile, petrinet);
 
         return { astRoot: new PetriNetModelElement(petrinet) };
     }
 
     initExecution(args: InitArguments): InitResponse {
+        this.petrinetsState.delete(args.sourceFile);
+
         if (!this.petrinets.has(args.sourceFile))
             throw new Error("The petri net of this file has not been parsed yet.");
 
         let petrinet = this.petrinets.get(args.sourceFile);
-        if (petrinet == undefined)
+
+        if (!petrinet)
             throw new Error("The petri net of this file is undefined.");
 
         this.petrinetsState.set(args.sourceFile, new PetriNetState(petrinet));
@@ -103,7 +109,7 @@ export class PetriNetsLRPServices implements LRPServices {
             throw new Error("The runtime state of this file has not been initialized yet.");
 
         let petrinetState = this.petrinetsState.get(args.sourceFile)
-        if (petrinetState == undefined)
+        if (!petrinetState)
             throw new Error("The runtime state of this file is undefined.");
 
         console.log("Current State : ");
@@ -120,7 +126,7 @@ export class PetriNetsLRPServices implements LRPServices {
             throw new Error("The runtime state of this file has not been initialized yet.");
 
         let petrinetState = this.petrinetsState.get(args.sourceFile);
-        if (petrinetState == undefined)
+        if (!petrinetState)
             throw new Error("The runtime state of this file is undefined.");
 
         petrinetState.trigger();
@@ -135,7 +141,7 @@ export class PetriNetsLRPServices implements LRPServices {
     checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse {
         if (!this.petrinetsState.has(args.sourceFile))
             throw new Error("The runtime state of this file has not been initialized yet.");
-        if (this.petrinetsState.get(args.sourceFile) == undefined)
+        if (!this.petrinetsState.get(args.sourceFile))
             throw new Error("The runtime state of this file is undefined.");
 
         switch (args.typeId) {
@@ -144,6 +150,12 @@ export class PetriNetsLRPServices implements LRPServices {
             }
             case "Place.full": {
                 return { isActivated: true, message: "The place will be full." };
+            }
+            case "Place.notEnough": {
+                return { isActivated: true, message: "The place will not contain enough tokens for the next transition's trigger." };
+            }
+            case "Place.tooMany": {
+                return { isActivated: true, message: "The place will contain too many tokens for the next transition's trigger." };
             }
             case "Transition.trigger": {
                 return { isActivated: true, message: "The transition is about to be triggered." };
