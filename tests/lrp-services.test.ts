@@ -2,19 +2,17 @@ import { NodeFileSystem } from 'langium/node';
 import * as path from 'path';
 import { PetriNet } from '../src/generated/ast';
 import { extractAstNode } from '../src/parse-util';
-import { PetriNetServices, createPetriNetServices } from '../src/petri-net-module';
+import { createPetriNetServices } from '../src/petri-net-module';
 import { PetriNetsLRPServices } from '../src/server/lrp-services';
 import { PetriNetState } from '../src/runtimeState';
 
-let lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
-let fileName: string;
-let services: PetriNetServices;
+let lrpServices: PetriNetsLRPServices;
+const directoryPath = path.join(__dirname, '../examples');
+const fileName = directoryPath + "/test.PetriNet";
+let services = createPetriNetServices(NodeFileSystem).PetriNet;
 
 beforeEach(() => {
     lrpServices = new PetriNetsLRPServices();
-    const directoryPath = path.join(__dirname, '../examples');
-    fileName = directoryPath + "/test.PetriNet";
-    services = createPetriNetServices(NodeFileSystem).PetriNet;
 })
 
 test('Parsing method test', () => {
