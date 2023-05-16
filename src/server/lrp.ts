@@ -23,7 +23,7 @@ export interface LRPServices {
      * 
      * @param args 
      */
-    getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateArguments;
+    getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse;
 
     /**
      * Performs the next execution step in the runtime state associated to a given source file.
