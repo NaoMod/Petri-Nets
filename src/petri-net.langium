@@ -4,6 +4,12 @@ entry PetriNet:
     'PetriNet' name=ID ':'
     (places+=Place|transitions+=Transition)*;
 
+Place: 
+    'Place' name=NamePlace ':'
+        'Capacity' ':'maxCapacity=INT ',' 
+        'Initial' 'token' 'number' ':' initialTokenNumber=INT 
+    'end';
+
 Transition:
     'Transition' name=NameTrans ':'
         ('From' sources+=Edge ('and' sources+=Edge)*)?
@@ -12,13 +18,7 @@ Transition:
 
 Edge:
     place=[Place:NamePlace] ',' 'weight' ':' weight=INT;
-
-Place: 
-    'Place' name=NamePlace ':'
-        'Capacity' ':'maxCapacity=INT ',' 
-        'Initial' 'token' 'number' ':' initialTokenNumber=INT 
-    'end';
-
+    
 // Ignore white spaces
 hidden terminal WS: /\s+/;
 
