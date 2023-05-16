@@ -4,8 +4,7 @@ import { createPetriNetServices } from './petri-net-module';
 import { PetriNetState } from './runtimeState';
 import { NodeFileSystem } from 'langium/node';
 import { startServer } from './server/server';
-import { createClient, makeMockRequest } from './client';
-import { Client } from 'jayson';
+
 
 const PORT: number = 49152;
 
@@ -16,9 +15,6 @@ async function main() {
   await new Promise<void>(resolve => setTimeout(() => {
     resolve()
   }, 2000));
-
-  const client: Client = createClient(PORT);
-  makeMockRequest(client);
 }
 
 /**

@@ -1,17 +1,16 @@
 import { Server } from 'jayson';
-import { run } from '../main';
+import { PetriNetsLRPServices } from './lrp-services';
 
 export function startServer(port: number): void {
+    const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
     const server: Server = new Server({
-        'execute': execute
+        'parse': lrpServices.parse,
+        'initExecution': lrpServices.initExecution,
+        'getRuntimeState': lrpServices.getRuntimeState,
+        'nextStep': lrpServices.nextStep,
+        'getBreakpointTypes': lrpServices.getBreakpointTypes,
+        'checkBreakpoint': lrpServices.checkBreakpoint
     });
-
     server.tcp().listen(port, 'localhost');
 }
 
-function execute(fileNames: string[], callback: any): void {
-    if (fileNames.length == 0) throw new Error("No files in this folder.");
-    for (let fileName of fileNames) {
-        callback(null, run(fileName));
-    }
-}

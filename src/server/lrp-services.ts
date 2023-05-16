@@ -1,8 +1,8 @@
 import { NodeFileSystem } from "langium/node";
-import { PetriNet, Place, Transition } from "src/generated/ast";
-import { extractAstNode } from "src/parse-util";
-import { createPetriNetServices } from "src/petri-net-module";
-import { PetriNetState } from "src/runtimeState";
+import { PetriNet, Place, Transition } from "../generated/ast";
+import { extractAstNode } from "../parse-util";
+import { createPetriNetServices } from "../petri-net-module";
+import { PetriNetState } from "../runtimeState";
 import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, InitArguments, InitResponse, LRPServices, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
 
 
