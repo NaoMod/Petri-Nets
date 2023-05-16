@@ -65,7 +65,7 @@ class TransitionModelElement implements ModelElement {
     }
 }
 
-//TODO: Implement LRP services, except for getBreakpointTypes and checkBreakpoint
+
 export class PetriNetsLRPServices implements LRPServices {
     petrinets = new Map<string, PetriNet>();
     petrinetsState = new Map<string, PetriNetState>();
@@ -79,6 +79,7 @@ export class PetriNetsLRPServices implements LRPServices {
 
 
     async parse(args: ParseArguments): Promise<ParseResponse> {
+        this.petrinets.delete(args.sourceFile);
         this.petrinetsState.delete(args.sourceFile);
 
         const services = createPetriNetServices(NodeFileSystem).PetriNet;
