@@ -3,20 +3,16 @@ import * as path from 'path';
 import { PetriNet } from '../src/generated/ast';
 import { extractAstNode } from '../src/parse-util';
 import { createPetriNetServices } from '../src/petri-net-module';
-import { PetriNetsLRPServices } from '../src/server/lrp-services';
 import { PetriNetState } from '../src/runtimeState';
+import { PetriNetsLRPServices } from '../src/server/lrp-services';
 
-let lrpServices: PetriNetsLRPServices;
 const directoryPath = path.join(__dirname, '../examples');
 const fileName = directoryPath + "/test.PetriNet";
 let services = createPetriNetServices(NodeFileSystem).PetriNet;
 
-beforeEach(() => {
-    lrpServices = new PetriNetsLRPServices();
-})
-
 test('Parsing method test', () => {
     expect(async () => {
+        const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
         const EXPECTED_PETRI_NET = await extractAstNode<PetriNet>(fileName, services);
 
         await lrpServices.parse({ sourceFile: fileName });
@@ -38,6 +34,7 @@ test('Parsing method test', () => {
 
 test('Initial Execution method test', () => {
     expect(async () => {
+        const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
         await lrpServices.parse({ sourceFile: fileName });
         let petrinet: PetriNet | undefined = lrpServices.petrinets.get(fileName);
         if (!petrinet) throw new Error("Petri net is undefined in init execution test");
@@ -63,6 +60,7 @@ test('Initial Execution method test', () => {
 
 test('Next Step method test', () => {
     expect(async () => {
+        const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
         await lrpServices.parse({ sourceFile: fileName });
         lrpServices.initExecution({ sourceFile: fileName });
 
