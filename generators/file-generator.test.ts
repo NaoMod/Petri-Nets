@@ -5,22 +5,15 @@ import { extractAstNode } from '../src/parse-util';
 import { createPetriNetServices } from '../src/petri-net-module';
 import { generatePetriNetFile } from './file-PetriNet-generator';
 
-beforeEach(async () => {
-    const directoryPath = path.join(__dirname, '../examples');
-    const fileName = directoryPath + "/test.PetriNet";
-    const services = createPetriNetServices(NodeFileSystem).PetriNet;
-    const EXPECTED_PETRI_NET = await extractAstNode<PetriNet>(fileName, services);
-    generatePetriNetFile(EXPECTED_PETRI_NET, directoryPath + "/generatedTest.PetriNet", path.join(__dirname, '../generators'));
-}
-
-)
 test('Generating a file correctly', async () => {
     const directoryPath = path.join(__dirname, '../examples');
     const fileName = directoryPath + "/test.PetriNet";
     const services = createPetriNetServices(NodeFileSystem).PetriNet;
     const EXPECTED_PETRI_NET = await extractAstNode<PetriNet>(fileName, services);
 
+
     const testDirectoryPath = path.join(__dirname, '../generators');
+    generatePetriNetFile(EXPECTED_PETRI_NET, testDirectoryPath + "/generatedTest.PetriNet", testDirectoryPath);
     const TESTED_PETRI_NET = await extractAstNode<PetriNet>(testDirectoryPath + "/generatedTest.PetriNet", services);
 
     expect(async () => {
