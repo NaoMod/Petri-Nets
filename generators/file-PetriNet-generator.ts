@@ -3,6 +3,8 @@ import { expandToNode as toNode, joinToNode as join, Generated, toString } from 
 import path from 'path';
 import { Edge, PetriNet, Place, Transition } from '../src/generated/ast';
 import { extractDestinationAndName } from '../src/parse-util';
+import { findPlaceFromReference } from '../src/runtimeState';
+
 
 
 export function generatePetriNetFile(petrinet: PetriNet, filePath: string, destination: string | undefined): string {
@@ -38,11 +40,6 @@ function joinWithExtraNL<T>(content: T[], toString: (e: T) => Generated): Genera
 }
 
 function joinGenerated(content: Generated, added: Generated, noAdd?: boolean): Generated {
-    if (noAdd) {
-        return toNode`
-    ${added}
-    `;
-    }
     return toNode`
     ${content} and ${added}
     `;
@@ -51,6 +48,7 @@ function joinGenerated(content: Generated, added: Generated, noAdd?: boolean): G
 export function generateJavaContent(ctx: GeneratorContext): Generated {
     return toNode`
     PetriNet ${ctx.petrinet.name} :
+
         ${joinWithExtraNL(ctx.petrinet.places, place => generatePlaceDeclaration(ctx, place))}
         ${joinWithExtraNL(ctx.petrinet.transitions, transition => generateTransitionDeclaration(ctx, transition))}
     `;
@@ -62,21 +60,20 @@ function generatePlaceDeclaration(ctx: GeneratorContext, place: Place): Generate
         Capacity : ${place.maxCapacity},
         Initial token number : ${place.initialTokenNumber}
     end    
+
     `;
 }
 
 function generateTransitionDeclaration(ctx: GeneratorContext, transition: Transition): Generated {
-    let generatedSources: Generated;
-    let generatedDestinations: Generated;
+    let generatedSources: Generated = generateEdgeDeclaration(ctx, transition.sources[0]);
+    let generatedDestinations: Generated = generateEdgeDeclaration(ctx, transition.destinations[0]);
     for (let source of transition.sources) {
-        if (source == transition.sources[0])
-            generatedSources = joinGenerated(generatedSources, generateEdgeDeclaration(ctx, source), true);
-        generatedSources = joinGenerated(generatedSources, generateEdgeDeclaration(ctx, source));
+        if (!(source == transition.sources[0]))
+            generatedSources = joinGenerated(generatedSources, generateEdgeDeclaration(ctx, source));
     }
     for (let destination of transition.destinations) {
-        if (destination == transition.destinations[0])
-            generatedDestinations = joinGenerated(generatedDestinations, generateEdgeDeclaration(ctx, destination), true);
-        generatedDestinations = joinGenerated(generatedDestinations, generateEdgeDeclaration(ctx, destination));
+        if (!(destination == transition.destinations[0]))
+            generatedDestinations = joinGenerated(generatedDestinations, generateEdgeDeclaration(ctx, destination));
     }
     return toNode`
     Transition ${transition.name} :
@@ -87,7 +84,8 @@ function generateTransitionDeclaration(ctx: GeneratorContext, transition: Transi
 }
 
 function generateEdgeDeclaration(ctx: GeneratorContext, edge: Edge): Generated {
+    let place: Place = findPlaceFromReference(edge.place, ctx.petrinet)
     return toNode`
-    ${edge.place}, weight : ${edge.weight}
+    ${place.name}, weight : ${edge.weight}
     `;
 }
