@@ -80,6 +80,7 @@ function generateTransitionDeclaration(ctx: GeneratorContext, transition: Transi
         From ${generatedSources}
         To ${generatedDestinations}
     end
+    
     `;
 }
 

@@ -14,3 +14,4 @@ PetriNet test :
         From P1, weight : 2
         To P2, weight : 1
     end
+
