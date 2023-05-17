@@ -177,7 +177,7 @@ export class PlaceState {
   }
 }
 
-class TokenState {
+export class TokenState {
   private source: string;
 
   constructor(source?: Transition) {

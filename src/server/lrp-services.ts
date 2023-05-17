@@ -2,8 +2,8 @@ import { NodeFileSystem } from "langium/node";
 import { PetriNet, Place, Transition } from "../generated/ast";
 import { extractAstNode } from "../parse-util";
 import { createPetriNetServices } from "../petri-net-module";
-import { PetriNetState } from "../runtimeState";
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, InitArguments, InitResponse, LRPServices, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
+import { PetriNetState, PlaceState, TokenState, TransitionState } from "../runtimeState";
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, LRPServices, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
 
 
 class PetriNetModelElement implements ModelElement {
@@ -65,6 +65,89 @@ class TransitionModelElement implements ModelElement {
     }
 }
 
+class PetriNetStateModelElement implements ModelElement {
+    id: string;
+    type: string;
+    children: { [key: string]: ModelElement | ModelElement[]; };
+    refs: { [key: string]: string | string[]; };
+    attributes: { [key: string]: any; };
+    location?: Location | undefined;
+
+    constructor(petrinetState: PetriNetState) {
+        this.id = "PetriNetStateOf" + petrinetState.getPetriNet().name;
+        this.type = "PetriNetState";
+        let everyPlaces: Array<PlaceStateModelElement> = [];
+        let everyTransitions: Array<TransitionStateModelElement> = [];
+        for (let placeState of petrinetState.getPlaces()) {
+            everyPlaces.push(new PlaceStateModelElement(placeState));
+        }
+        for (let transitionState of petrinetState.getTransitions()) {
+            everyTransitions.push(new TransitionStateModelElement(transitionState));
+        }
+        this.children = { placesState: everyPlaces, transitionsState: everyTransitions };
+        this.attributes = {};
+        this.refs = { petrinet: petrinetState.getPetriNet().name };
+    }
+}
+
+class PlaceStateModelElement implements ModelElement {
+    id: string;
+    type: string;
+    children: { [key: string]: ModelElement | ModelElement[]; };
+    refs: { [key: string]: string | string[]; };
+    attributes: { [key: string]: any; };
+    location?: Location | undefined;
+
+    constructor(placeState: PlaceState) {
+        this.id = placeState.getPlace().name;
+        this.type = "PlaceState";
+        let tokens: Array<TokenStateModelElement> = [];
+        for (let token of placeState.getEveryTokens()) {
+            tokens.push(new TokenStateModelElement(token));
+        }
+        this.children = { everyTokens: tokens };
+        this.refs = { place: placeState.getPlace().name };
+        this.attributes = {};
+    }
+}
+
+let iToken = 1;
+class TokenStateModelElement implements ModelElement {
+    id: string;
+    type: string;
+    children: { [key: string]: ModelElement | ModelElement[]; };
+    refs: { [key: string]: string | string[]; };
+    attributes: { [key: string]: any; };
+    location?: Location | undefined;
+
+    constructor(token: TokenState) {
+        this.id = "Token" + iToken.toString();
+        this.type = "TokenState";
+        this.children = {};
+        this.refs = {};
+        this.attributes = { source: token.getSource() };
+        iToken = iToken + 1;
+    }
+}
+
+let iTransition = 1;
+class TransitionStateModelElement implements ModelElement {
+    id: string;
+    type: string;
+    children: { [key: string]: ModelElement | ModelElement[]; };
+    refs: { [key: string]: string | string[]; };
+    attributes: { [key: string]: any; };
+    location?: Location | undefined;
+
+    constructor(transitionState: TransitionState) {
+        this.id = "Transition" + iTransition.toString();
+        this.type = "TransitionState";
+        this.children = {};
+        this.attributes = { doable: transitionState.isDoable() };
+        this.refs = { transition: transitionState.getTransition().name };
+        iTransition = iTransition + 1;
+    }
+}
 
 export class PetriNetsLRPServices implements LRPServices {
     petrinets = new Map<string, PetriNet>();
@@ -105,7 +188,7 @@ export class PetriNetsLRPServices implements LRPServices {
         return { isExecutionDone: true };
     }
 
-    getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateArguments {
+    getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse {
         if (!this.petrinetsState.has(args.sourceFile))
             throw new Error("The runtime state of this file has not been initialized yet.");
 
@@ -119,7 +202,7 @@ export class PetriNetsLRPServices implements LRPServices {
             console.log("    Tokens in place " + place.getPlace().name + " : " + place.getCurrentTokenNumber());
             console.log();
         }
-        return { sourceFile: args.sourceFile };
+        return { runtimeStateRoot: new PetriNetStateModelElement(petrinetState) };
     }
 
     nextStep(args: StepArguments): StepResponse {
