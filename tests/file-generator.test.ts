@@ -3,7 +3,7 @@ import * as path from 'path';
 import { PetriNet } from '../src/generated/ast';
 import { extractAstNode } from '../src/parse-util';
 import { createPetriNetServices } from '../src/petri-net-module';
-import { generatePetriNetFile } from './file-PetriNet-generator';
+import { generatePetriNetFile } from '../generators/file-PetriNet-generator';
 
 test('Generating a file correctly, used file test.PetriNet', async () => {
     const directoryPath = path.join(__dirname, '../examples');
@@ -12,7 +12,7 @@ test('Generating a file correctly, used file test.PetriNet', async () => {
     const EXPECTED_PETRI_NET = await extractAstNode<PetriNet>(fileName, services);
 
 
-    const testDirectoryPath = path.join(__dirname, '../generators/generated');
+    const testDirectoryPath = path.join(__dirname, '../tests/generated');
     generatePetriNetFile(EXPECTED_PETRI_NET, testDirectoryPath + "/testGenerated.PetriNet", testDirectoryPath);
     const TESTED_PETRI_NET = await extractAstNode<PetriNet>(testDirectoryPath + "/testGenerated.PetriNet", services);
 
@@ -37,7 +37,7 @@ test('Generating a file correctly, used file test2.PetriNet', async () => {
     const EXPECTED_PETRI_NET = await extractAstNode<PetriNet>(fileName, services);
 
 
-    const testDirectoryPath = path.join(__dirname, '../generators/generated');
+    const testDirectoryPath = path.join(__dirname, '../tests/generated');
     generatePetriNetFile(EXPECTED_PETRI_NET, testDirectoryPath + "/test2Generated.PetriNet", testDirectoryPath);
     const TESTED_PETRI_NET = await extractAstNode<PetriNet>(testDirectoryPath + "/test2Generated.PetriNet", services);
 
