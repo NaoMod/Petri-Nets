@@ -155,8 +155,8 @@ class TransitionStateModelElement implements ModelElement {
     }
 }
 
-const petrinets = new Map<string, PetriNet>();
-const petrinetsState = new Map<string, PetriNetState>();
+export const petrinets = new Map<string, PetriNet>();
+export const petrinetsState = new Map<string, PetriNetState>();
 const breakpoints: Array<BreakpointType> = [
     { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
     { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },

@@ -4,7 +4,7 @@ import { PetriNet } from '../src/generated/ast';
 import { extractAstNode } from '../src/parse-util';
 import { createPetriNetServices } from '../src/petri-net-module';
 import { PetriNetState } from '../src/runtimeState';
-import { PetriNetsLRPServices } from '../src/server/lrp-services';
+import { PetriNetsLRPServices, petrinets, petrinetsState } from '../src/server/lrp-services';
 
 const directoryPath = path.join(__dirname, '../examples');
 const fileName = directoryPath + "/test.PetriNet";
@@ -12,12 +12,11 @@ let services = createPetriNetServices(NodeFileSystem).PetriNet;
 
 test('Parsing method test', () => {
     expect(async () => {
-        const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
         const EXPECTED_PETRI_NET = await extractAstNode<PetriNet>(fileName, services);
 
-        await lrpServices.parse({ sourceFile: fileName });
+        await PetriNetsLRPServices.parse({ sourceFile: fileName });
 
-        const TESTED_PETRI_NET: PetriNet | undefined = lrpServices.petrinets.get(fileName);
+        const TESTED_PETRI_NET: PetriNet | undefined = petrinets.get(fileName);
 
         if ((!TESTED_PETRI_NET) || (!EXPECTED_PETRI_NET)) throw new Error("A petri net is undefined in parsing test");
         else {
@@ -34,13 +33,12 @@ test('Parsing method test', () => {
 
 test('Initial Execution method test', () => {
     expect(async () => {
-        const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
-        await lrpServices.parse({ sourceFile: fileName });
-        let petrinet: PetriNet | undefined = lrpServices.petrinets.get(fileName);
+        await PetriNetsLRPServices.parse({ sourceFile: fileName });
+        let petrinet: PetriNet | undefined = petrinets.get(fileName);
         if (!petrinet) throw new Error("Petri net is undefined in init execution test");
 
-        lrpServices.initExecution({ sourceFile: fileName });
-        const TESTED_PETRI_NET_STATE = lrpServices.petrinetsState.get(fileName);
+        PetriNetsLRPServices.initExecution({ sourceFile: fileName });
+        const TESTED_PETRI_NET_STATE = petrinetsState.get(fileName);
         const EXPECTED_PETRI_NET_STATE = new PetriNetState(petrinet);
 
         if (!TESTED_PETRI_NET_STATE || !EXPECTED_PETRI_NET_STATE) throw new Error("A petri net state is undefined in init execution test");
@@ -60,17 +58,16 @@ test('Initial Execution method test', () => {
 
 test('Next Step method test', () => {
     expect(async () => {
-        const lrpServices: PetriNetsLRPServices = new PetriNetsLRPServices();
-        await lrpServices.parse({ sourceFile: fileName });
-        lrpServices.initExecution({ sourceFile: fileName });
+        await PetriNetsLRPServices.parse({ sourceFile: fileName });
+        PetriNetsLRPServices.initExecution({ sourceFile: fileName });
 
-        let EXPECTED_STATE: PetriNetState | undefined = lrpServices.petrinetsState.get(fileName);
+        let EXPECTED_STATE: PetriNetState | undefined = petrinetsState.get(fileName);
         if (!EXPECTED_STATE) throw new Error();
 
         EXPECTED_STATE.trigger();
 
-        lrpServices.nextStep({ sourceFile: fileName });
-        const TESTED_STATE: PetriNetState | undefined = lrpServices.petrinetsState.get(fileName);
+        PetriNetsLRPServices.nextStep({ sourceFile: fileName });
+        const TESTED_STATE: PetriNetState | undefined = petrinetsState.get(fileName);
 
         if (!TESTED_STATE || !EXPECTED_STATE) throw new Error("A petri net state is undefined in next step test");
         else {
