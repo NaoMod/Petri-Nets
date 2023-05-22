@@ -3,10 +3,10 @@ import { PetriNet, Place, Transition } from "../generated/ast";
 import { extractAstNode } from "../parse-util";
 import { createPetriNetServices } from "../petri-net-module";
 import { PetriNetState, PlaceState, TokenState, TransitionState } from "../runtimeState";
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, LRPServices, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
 
 
-class PetriNetModelElement implements ModelElement {
+export class PetriNetModelElement implements ModelElement {
     id: string;
     type: string;
     children: { [key: string]: ModelElement | ModelElement[]; };
@@ -65,7 +65,7 @@ class TransitionModelElement implements ModelElement {
     }
 }
 
-class PetriNetStateModelElement implements ModelElement {
+export class PetriNetStateModelElement implements ModelElement {
     id: string;
     type: string;
     children: { [key: string]: ModelElement | ModelElement[]; };
@@ -149,50 +149,49 @@ class TransitionStateModelElement implements ModelElement {
     }
 }
 
-export class PetriNetsLRPServices implements LRPServices {
-    petrinets = new Map<string, PetriNet>();
-    petrinetsState = new Map<string, PetriNetState>();
-    breakpoints: Array<BreakpointType> = [
-        { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-        { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-        { id: "Place.notEnough", name: "NumberOfTokenInfToTransitionWeight", description: "Breaks when the number of tokens in a place is inferior to the transition's weight", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-        { id: "Place.tooMany", name: "NumberOfTokenSupToMaxCapacity", description: "Breaks when the number of tokens in a place is superior to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-        { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, objectType: "Transition" }] }
-    ];
+const petrinets = new Map<string, PetriNet>();
+const petrinetsState = new Map<string, PetriNetState>();
+const breakpoints: Array<BreakpointType> = [
+    { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+    { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+    { id: "Place.notEnough", name: "NumberOfTokenInfToTransitionWeight", description: "Breaks when the number of tokens in a place is inferior to the transition's weight", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+    { id: "Place.tooMany", name: "NumberOfTokenSupToMaxCapacity", description: "Breaks when the number of tokens in a place is superior to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
+    { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, objectType: "Transition" }] }
+];
 
-
-    async parse(args: ParseArguments): Promise<ParseResponse> {
-        this.petrinets.delete(args.sourceFile);
-        this.petrinetsState.delete(args.sourceFile);
+export class PetriNetsLRPServices {
+    static async parse(args: ParseArguments): Promise<ParseResponse> {
+        petrinets.delete(args.sourceFile);
+        petrinetsState.delete(args.sourceFile);
 
         const services = createPetriNetServices(NodeFileSystem).PetriNet;
         let petrinet = await extractAstNode<PetriNet>(args.sourceFile, services);
 
-        this.petrinets.set(args.sourceFile, petrinet);
+        petrinets.set(args.sourceFile, petrinet);
 
         return { astRoot: new PetriNetModelElement(petrinet) };
     }
 
-    initExecution(args: InitArguments): InitResponse {
-        this.petrinetsState.delete(args.sourceFile);
+    static initExecution(args: InitArguments): InitResponse {
+        petrinetsState.delete(args.sourceFile);
 
-        if (!this.petrinets.has(args.sourceFile))
+        if (!petrinets.has(args.sourceFile))
             throw new Error("The petri net of this file has not been parsed yet.");
 
-        let petrinet = this.petrinets.get(args.sourceFile);
+        let petrinet = petrinets.get(args.sourceFile);
 
         if (!petrinet)
             throw new Error("The petri net of this file is undefined.");
 
-        this.petrinetsState.set(args.sourceFile, new PetriNetState(petrinet));
+        petrinetsState.set(args.sourceFile, new PetriNetState(petrinet));
         return { isExecutionDone: true };
     }
 
-    getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse {
-        if (!this.petrinetsState.has(args.sourceFile))
+    static getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse {
+        if (!petrinetsState.has(args.sourceFile))
             throw new Error("The runtime state of this file has not been initialized yet.");
 
-        let petrinetState = this.petrinetsState.get(args.sourceFile)
+        let petrinetState = petrinetsState.get(args.sourceFile)
         if (!petrinetState)
             throw new Error("The runtime state of this file is undefined.");
 
@@ -205,11 +204,11 @@ export class PetriNetsLRPServices implements LRPServices {
         return { runtimeStateRoot: new PetriNetStateModelElement(petrinetState) };
     }
 
-    nextStep(args: StepArguments): StepResponse {
-        if (!this.petrinetsState.has(args.sourceFile))
+    static nextStep(args: StepArguments): StepResponse {
+        if (!petrinetsState.has(args.sourceFile))
             throw new Error("The runtime state of this file has not been initialized yet.");
 
-        let petrinetState = this.petrinetsState.get(args.sourceFile);
+        let petrinetState = petrinetsState.get(args.sourceFile);
         if (!petrinetState)
             throw new Error("The runtime state of this file is undefined.");
 
@@ -217,15 +216,15 @@ export class PetriNetsLRPServices implements LRPServices {
         return { isExecutionDone: petrinetState.canEvolve() };
     }
 
-    getBreakpointTypes(): GetBreakpointTypesResponse {
-        return { breakpointTypes: this.breakpoints };
+    static getBreakpointTypes(): GetBreakpointTypesResponse {
+        return { breakpointTypes: breakpoints };
     }
 
 
-    checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse {
-        if (!this.petrinetsState.has(args.sourceFile))
+    static checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse {
+        if (!petrinetsState.has(args.sourceFile))
             throw new Error("The runtime state of this file has not been initialized yet.");
-        if (!this.petrinetsState.get(args.sourceFile))
+        if (!petrinetsState.get(args.sourceFile))
             throw new Error("The runtime state of this file is undefined.");
 
         switch (args.typeId) {

@@ -3,13 +3,14 @@ import { PetriNet } from './generated/ast';
 import { createPetriNetServices } from './petri-net-module';
 import { PetriNetState } from './runtimeState';
 import { NodeFileSystem } from 'langium/node';
-import { startServer } from './server/server';
+import { LRPServer } from './server/server';
 
 
 const PORT: number = 49152;
 
 async function main() {
-  startServer(PORT);
+  const server: LRPServer = new LRPServer();
+  server.start(PORT);
 
   //wait for server to start
   await new Promise<void>(resolve => setTimeout(() => {
