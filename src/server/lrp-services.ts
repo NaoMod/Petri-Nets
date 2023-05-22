@@ -2,7 +2,7 @@ import { NodeFileSystem } from "langium/node";
 import { PetriNet, Place, Transition } from "../generated/ast";
 import { extractAstNode } from "../parse-util";
 import { createPetriNetServices } from "../petri-net-module";
-import { PetriNetState, PlaceState, TokenState, TransitionState } from "../runtimeState";
+import { PetriNetState, PlaceState, TokenState, TransitionState, findPlaceFromReference } from "../runtimeState";
 import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
 
 
@@ -23,7 +23,7 @@ export class PetriNetModelElement implements ModelElement {
             modelPlaces.push(new PlaceModelElement(place));
         }
         for (let transition of petrinet.transitions) {
-            modelTransitions.push(new TransitionModelElement(transition));
+            modelTransitions.push(new TransitionModelElement(transition, petrinet));
         }
         this.children = { "places": modelPlaces, "transitions": modelTransitions };
         this.refs = {};
@@ -44,7 +44,7 @@ class PlaceModelElement implements ModelElement {
         this.type = place.$type;
         this.children = {};
         this.refs = {};
-        this.attributes = { placeCapacity: place.maxCapacity, placeInitTokenNumber: place.initialTokenNumber };
+        this.attributes = { placeName: place.name, placeCapacity: place.maxCapacity, placeInitTokenNumber: place.initialTokenNumber };
     }
 }
 
@@ -56,12 +56,18 @@ class TransitionModelElement implements ModelElement {
     attributes: { [key: string]: any; };
     location?: Location | undefined;
 
-    constructor(transition: Transition) {
+    constructor(transition: Transition, petrinet: PetriNet) {
         this.id = transition.name;
         this.type = transition.$type;
         this.children = {};
-        this.attributes = {};
-        this.refs = { sources: transition.sources.toString(), destinations: transition.destinations.toString() };
+        this.attributes = { transitionName: transition.name };
+        let sourcesIds: Array<string> = [];
+        let destinationsIds: Array<string> = [];
+        for (let source of transition.sources)
+            sourcesIds.push(findPlaceFromReference(source.place, petrinet).name);
+        for (let destination of transition.destinations)
+            destinationsIds.push(findPlaceFromReference(destination.place, petrinet).name);
+        this.refs = { sourcesIds: sourcesIds, destinationsIds: destinationsIds };
     }
 }
 
