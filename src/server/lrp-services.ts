@@ -45,6 +45,8 @@ class PlaceModelElement implements ModelElement {
         this.children = {};
         this.refs = {};
         this.attributes = { placeName: place.name, placeCapacity: place.maxCapacity, placeInitTokenNumber: place.initialTokenNumber };
+        if (place.$cstNode)
+            this.location = { line: place.$cstNode.range.start.line, column: place.$cstNode.range.start.character, endLine: place.$cstNode.range.end.line, endColumn: place.$cstNode.range.end.character };
     }
 }
 
@@ -68,6 +70,8 @@ class TransitionModelElement implements ModelElement {
         for (let destination of transition.destinations)
             destinationsIds.push(findPlaceFromReference(destination.place, petrinet).name);
         this.refs = { sourcesIds: sourcesIds, destinationsIds: destinationsIds };
+        if (transition.$cstNode)
+            this.location = { line: transition.$cstNode.range.start.line, column: transition.$cstNode.range.start.character, endLine: transition.$cstNode.range.end.line, endColumn: transition.$cstNode.range.end.character };
     }
 }
 
@@ -190,7 +194,7 @@ export class PetriNetsLRPServices {
             throw new Error("The petri net of this file is undefined.");
 
         petrinetsState.set(args.sourceFile, new PetriNetState(petrinet));
-        return { isExecutionDone: true };
+        return { isExecutionDone: !petrinetsState.get(args.sourceFile)?.canEvolve() };
     }
 
     static getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse {
@@ -201,12 +205,6 @@ export class PetriNetsLRPServices {
         if (!petrinetState)
             throw new Error("The runtime state of this file is undefined.");
 
-        console.log("Current State : ");
-        for (let place of petrinetState.getPlaces()) {
-            console.log();
-            console.log("    Tokens in place " + place.getPlace().name + " : " + place.getCurrentTokenNumber());
-            console.log();
-        }
         return { runtimeStateRoot: new PetriNetStateModelElement(petrinetState) };
     }
 
@@ -219,7 +217,7 @@ export class PetriNetsLRPServices {
             throw new Error("The runtime state of this file is undefined.");
 
         petrinetState.trigger();
-        return { isExecutionDone: petrinetState.canEvolve() };
+        return { isExecutionDone: !petrinetState.canEvolve() };
     }
 
     static getBreakpointTypes(): GetBreakpointTypesResponse {
