@@ -46,7 +46,7 @@ class PlaceModelElement implements ModelElement {
         this.refs = {};
         this.attributes = { placeName: place.name, placeCapacity: place.maxCapacity, placeInitTokenNumber: place.initialTokenNumber };
         if (place.$cstNode)
-            this.location = { line: place.$cstNode.range.start.line, column: place.$cstNode.range.start.character, endLine: place.$cstNode.range.end.line, endColumn: place.$cstNode.range.end.character };
+            this.location = { line: place.$cstNode.range.start.line + 1, column: place.$cstNode.range.start.character, endLine: place.$cstNode.range.end.line + 1, endColumn: place.$cstNode.range.end.character };
     }
 }
 
@@ -71,7 +71,7 @@ class TransitionModelElement implements ModelElement {
             destinationsIds.push(findPlaceFromReference(destination.place, petrinet).name);
         this.refs = { sourcesIds: sourcesIds, destinationsIds: destinationsIds };
         if (transition.$cstNode)
-            this.location = { line: transition.$cstNode.range.start.line, column: transition.$cstNode.range.start.character, endLine: transition.$cstNode.range.end.line, endColumn: transition.$cstNode.range.end.character };
+            this.location = { line: transition.$cstNode.range.start.line + 1, column: transition.$cstNode.range.start.character, endLine: transition.$cstNode.range.end.line + 1, endColumn: transition.$cstNode.range.end.character };
     }
 }
 
