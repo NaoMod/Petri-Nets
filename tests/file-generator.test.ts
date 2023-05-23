@@ -3,7 +3,7 @@ import * as path from 'path';
 import { PetriNet } from '../src/generated/ast';
 import { extractAstNode } from '../src/parse-util';
 import { createPetriNetServices } from '../src/petri-net-module';
-import { generatePetriNetFile } from '../generators/file-PetriNet-generator';
+import { generatePetriNetFile } from '../src/generators/file-PetriNet-generator';
 
 test('Generating a file correctly, used file test.PetriNet', async () => {
     const directoryPath = path.join(__dirname, '../examples');
@@ -13,7 +13,7 @@ test('Generating a file correctly, used file test.PetriNet', async () => {
 
 
     const testDirectoryPath = path.join(__dirname, '../tests/generated');
-    generatePetriNetFile(EXPECTED_PETRI_NET, testDirectoryPath + "/testGenerated.PetriNet", testDirectoryPath);
+    generatePetriNetFile(testDirectoryPath + "/testGenerated.PetriNet", testDirectoryPath, EXPECTED_PETRI_NET);
     const TESTED_PETRI_NET = await extractAstNode<PetriNet>(testDirectoryPath + "/testGenerated.PetriNet", services);
 
     expect(async () => {
@@ -38,7 +38,7 @@ test('Generating a file correctly, used file test2.PetriNet', async () => {
 
 
     const testDirectoryPath = path.join(__dirname, '../tests/generated');
-    generatePetriNetFile(EXPECTED_PETRI_NET, testDirectoryPath + "/test2Generated.PetriNet", testDirectoryPath);
+    generatePetriNetFile(testDirectoryPath + "/test2Generated.PetriNet", testDirectoryPath, EXPECTED_PETRI_NET);
     const TESTED_PETRI_NET = await extractAstNode<PetriNet>(testDirectoryPath + "/test2Generated.PetriNet", services);
 
     expect(async () => {
@@ -52,5 +52,15 @@ test('Generating a file correctly, used file test2.PetriNet', async () => {
                 if (TESTED_PETRI_NET.transitions[i].name != EXPECTED_PETRI_NET.transitions[i].name) throw new Error("Wrong transition");
             }
         }
+    }).not.toThrow();
+})
+
+test('Generating a file, using a random petri net', () => {
+    const testDirectoryPath = path.join(__dirname, '../tests/generated');
+    generatePetriNetFile(testDirectoryPath + "/randomTestGenerated.PetriNet", testDirectoryPath);
+
+    expect(async () => {
+        const services = createPetriNetServices(NodeFileSystem).PetriNet;
+        await extractAstNode<PetriNet>(testDirectoryPath + "/randomTestGenerated.PetriNet", services);
     }).not.toThrow();
 })

@@ -1,0 +1,112 @@
+PetriNet randomPetriNet :
+
+     
+    Place P1 :
+        Capacity : 15,
+        Initial token number : 11
+    end
+     
+    Place P2 :
+        Capacity : 0,
+        Initial token number : 0
+    end
+     
+    Place P3 :
+        Capacity : 10,
+        Initial token number : 1
+    end
+     
+    Transition T1 :
+        From P2, weight : 2
+         and P1, weight : 1
+        To P2, weight : 5
+         and P1, weight : 1
+         and P3, weight : 6
+    end
+     
+    Transition T2 :
+        From P1, weight : 5
+         and P2, weight : 0
+        To P3, weight : 0
+         and P1, weight : 3
+         and P2, weight : 3
+    end
+     
+    Transition T3 :
+        From P2, weight : 0
+         and P1, weight : 3
+        To P3, weight : 1
+         and P1, weight : 10
+         and P2, weight : 0
+    end
+     
+    Transition T4 :
+        From P2, weight : 3
+         and P1, weight : 7
+        To P1, weight : 5
+         and P2, weight : 10
+    end
+     
+    Transition T5 :
+        From P2, weight : 2
+         and P1, weight : 8
+        To P3, weight : 3
+         and P1, weight : 8
+         and P2, weight : 7
+    end
+     
+    Transition T6 :
+        From P2, weight : 2
+         and P1, weight : 0
+        To P3, weight : 3
+         and P1, weight : 1
+    end
+     
+    Transition T7 :
+        From P1, weight : 1
+         and P2, weight : 10
+        To P2, weight : 5
+         and P1, weight : 6
+         and P3, weight : 7
+    end
+     
+    Transition T8 :
+        From P2, weight : 3
+         and P1, weight : 10
+        To P3, weight : 1
+         and P1, weight : 0
+    end
+     
+    Transition T9 :
+        From P1, weight : 1
+         and P2, weight : 7
+         and P3, weight : 6
+        To P3, weight : 2
+         and P1, weight : 4
+         and P2, weight : 7
+    end
+     
+    Transition T10 :
+        From P1, weight : 5
+         and P2, weight : 8
+         and P3, weight : 3
+        To P1, weight : 1
+         and P2, weight : 10
+         and P3, weight : 6
+    end
+     
+    Transition T11 :
+        From P1, weight : 3
+         and P2, weight : 7
+        To P2, weight : 4
+         and P1, weight : 7
+    end
+     
+    Transition T12 :
+        From P3, weight : 5
+         and P1, weight : 7
+         and P2, weight : 10
+        To P3, weight : 5
+         and P1, weight : 6
+         and P2, weight : 0
+    end
