@@ -1,5 +1,5 @@
 import { NodeFileSystem } from "langium/node";
-import { PetriNet, Place, Transition } from "../generated/ast";
+import { Edge, PetriNet, Place, Transition } from "../generated/ast";
 import { extractAstNode } from "../parse-util";
 import { createPetriNetServices } from "../petri-net-module";
 import { PetriNetState, PlaceState, TokenState, TransitionState, findPlaceFromReference } from "../runtimeState";
@@ -61,17 +61,37 @@ class TransitionModelElement implements ModelElement {
     constructor(transition: Transition, petrinet: PetriNet) {
         this.id = transition.name;
         this.type = transition.$type;
-        this.children = {};
+        let allSourceEdges: Array<EdgeModelElement> = [];
+        let allDestinationEdges: Array<EdgeModelElement> = [];
+        for (let source of transition.sources) {
+            allSourceEdges.push(new EdgeModelElement(source, petrinet));
+        }
+        for (let destination of transition.destinations) {
+            allDestinationEdges.push(new EdgeModelElement(destination, petrinet));
+        }
+        this.children = { sources: allSourceEdges, destinations: allDestinationEdges };
         this.attributes = { transitionName: transition.name };
-        let sourcesIds: Array<string> = [];
-        let destinationsIds: Array<string> = [];
-        for (let source of transition.sources)
-            sourcesIds.push(findPlaceFromReference(source.place, petrinet).name);
-        for (let destination of transition.destinations)
-            destinationsIds.push(findPlaceFromReference(destination.place, petrinet).name);
-        this.refs = { sourcesIds: sourcesIds, destinationsIds: destinationsIds };
+        this.refs = {};
         if (transition.$cstNode)
             this.location = { line: transition.$cstNode.range.start.line + 1, column: transition.$cstNode.range.start.character, endLine: transition.$cstNode.range.end.line + 1, endColumn: transition.$cstNode.range.end.character };
+    }
+}
+
+let iEdge = 1;
+class EdgeModelElement implements ModelElement {
+    id: string;
+    type: string;
+    children: { [key: string]: ModelElement | ModelElement[]; };
+    refs: { [key: string]: string | string[]; };
+    attributes: { [key: string]: any; };
+    location?: Location | undefined;
+
+    constructor(edge: Edge, petrinet: PetriNet) {
+        this.id = "Edge" + iEdge;
+        this.type = edge.$type;
+        this.children = {};
+        this.refs = { placeId: findPlaceFromReference(edge.place, petrinet).name };
+        this.attributes = { weight: edge.weight };
     }
 }
 
