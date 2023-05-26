@@ -27,7 +27,9 @@ export class LRPServer {
         });
     }
 
-    start(port: number): void {
+    start(port?: number): void {
+        if (!port)
+            this.server.tcp().listen(49152, 'localhost');
         this.server.tcp().listen(port, 'localhost');
     }
 }

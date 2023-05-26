@@ -90,7 +90,7 @@ class EdgeModelElement implements ModelElement {
         this.id = "Edge" + iEdge;
         this.type = edge.$type;
         this.children = {};
-        this.refs = { placeId: findPlaceFromReference(edge.place, petrinet).name };
+        this.refs = { place: findPlaceFromReference(edge.place, petrinet).name };
         this.attributes = { weight: edge.weight };
     }
 }

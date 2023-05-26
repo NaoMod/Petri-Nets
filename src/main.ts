@@ -1,11 +1,9 @@
 import { LRPServer } from './server/server';
 
 
-const PORT: number = 49152;
-
-async function main() {
+export async function main(port?: number) {
   const server: LRPServer = new LRPServer();
-  server.start(PORT);
+  server.start(port);
 
   //wait for server to start
   await new Promise<void>(resolve => setTimeout(() => {
