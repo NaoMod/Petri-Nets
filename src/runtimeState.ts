@@ -4,8 +4,8 @@ import { PetriNet, Place, Transition } from './generated/ast';
 /**
   * Return the placeState corresponding to a place
   * 
-  * @param refPlace, the place's reference
-  * @returns the corresponding place
+  * @param place, the place to find a placeState from
+  * @returns the corresponding placeState
   */
 function findPlaceStateFromPlace(place: Place, petrinet: PetriNetState): PlaceState {
   let plc: PlaceState = petrinet.getPlaces()[0];
