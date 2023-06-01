@@ -3,7 +3,6 @@ import { expandToNode as toNode, joinToNode as join, Generated, toString } from 
 import path from 'path';
 import { Edge, PetriNet, Place, Transition } from '../generated/ast';
 import { extractDestinationAndName } from '../parse-util';
-import { findPlaceFromReference } from '../runtimeState';
 
 const nbMaxTransition = 50;
 const nbMaxPlaces = 50;
@@ -171,8 +170,8 @@ function generateTransitionDeclaration(ctx: GeneratorContext, transition?: Trans
 }
 
 function generateEdgeDeclaration(ctx: GeneratorContext, edge?: Edge, newEdge?: Array<any>): Generated {
-    if ((ctx.petrinet) && (edge)) {
-        let place: Place = findPlaceFromReference(edge.place, ctx.petrinet)
+    if ((ctx.petrinet) && (edge) && (edge.place.ref)) {
+        let place: Place = edge.place.ref;
         return toNode`
     ${place.name}, weight : ${edge.weight}
     `;

@@ -2,7 +2,7 @@ import { NodeFileSystem } from "langium/node";
 import { Edge, PetriNet, Place, Transition } from "../generated/ast";
 import { extractAstNode } from "../parse-util";
 import { createPetriNetServices } from "../petri-net-module";
-import { PetriNetState, PlaceState, TokenState, TransitionState, findPlaceFromReference } from "../runtimeState";
+import { PetriNetState, PlaceState, TokenState, TransitionState } from "../runtimeState";
 import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
 
 
@@ -90,7 +90,9 @@ class EdgeModelElement implements ModelElement {
         this.id = "Edge" + iEdge;
         this.type = edge.$type;
         this.children = {};
-        this.refs = { place: findPlaceFromReference(edge.place, petrinet).name };
+        if (edge.place.ref)
+            this.refs = { place: edge.place.ref.name };
+        else this.refs = {};
         this.attributes = { weight: edge.weight };
     }
 }
@@ -173,7 +175,7 @@ class TransitionStateModelElement implements ModelElement {
         this.id = "Transition" + iTransition.toString();
         this.type = "TransitionState";
         this.children = {};
-        this.attributes = { doable: transitionState.isDoable() };
+        this.attributes = { doable: transitionState.computeDoable() };
         this.refs = { transition: transitionState.getTransition().name };
         iTransition = iTransition + 1;
     }

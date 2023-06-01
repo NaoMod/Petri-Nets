@@ -1,35 +1,5 @@
 
-import { Reference } from 'langium';
 import { PetriNet, Place, Transition } from './generated/ast';
-
-/**
-   * Return the place corresponding to a reference
-   * 
-   * @param refPlace, the place's reference
-   * @param petrinet, the petrinet containing the place's reference
-   * @returns the corresponding place
-   */
-export function findPlaceFromReference(refPlace: Reference<Place>, petrinet: PetriNet): Place {
-  let plc: Place = petrinet.places[0];
-  for (let place of petrinet.places) {
-    if (place === refPlace.ref) return place;
-  }
-  return plc;
-}
-
-/**
-   * Return the transition corresponding to a reference
-   * 
-   * @param refTransition, the transition's reference
-   * @returns the corresponding transition
-   */
-export function findTransitionFromReference(refTransition: Reference<Transition>, petrinet: PetriNet): Transition {
-  let trnst: Transition = petrinet.transitions[0];
-  for (let transition of petrinet.transitions) {
-    if (transition === refTransition.ref) return transition;
-  }
-  return trnst;
-}
 
 /**
   * Return the placeState corresponding to a place
@@ -80,9 +50,6 @@ export class PetriNetState {
     return this.maxIterations;
   }
 
-
-
-
   /**
    * Will find the next triggerable Transition
    * 
@@ -106,7 +73,7 @@ export class PetriNetState {
   public canEvolve(): boolean {
     if (this.currentNumberIterations < this.maxIterations) {
       for (let transitionState of this.transitionsState) {
-        if (transitionState.isDoable()) {
+        if (transitionState.computeDoable()) {
           return true;
         }
       }
@@ -124,11 +91,14 @@ export class PetriNetState {
 
     if (transition != null) {
       for (let source of transition.sources) {
-        findPlaceStateFromPlace(findPlaceFromReference(source.place, this.petrinet), this).removeTokens(source.weight);
-
+        if (source.place.ref)
+          findPlaceStateFromPlace(source.place.ref, this).removeTokens(source.weight);
+        else return false;
       }
       for (let destination of transition.destinations) {
-        findPlaceStateFromPlace(findPlaceFromReference(destination.place, this.petrinet), this).addTokens(destination.weight, transition);
+        if (destination.place.ref)
+          findPlaceStateFromPlace(destination.place.ref, this).addTokens(destination.weight, transition);
+        else return false;
       }
       this.currentNumberIterations = this.currentNumberIterations + 1;
       return true;
@@ -219,22 +189,30 @@ export class TransitionState {
     this.doable = res;
   }
 
-  isDoable(): boolean {
+  /**
+   * Will check if the transition is doable, will change its attribute doable.
+   * @returns true if the transition is doable, false otherwise
+   */
+  computeDoable(): boolean {
     let res = true;
     for (let source of this.transition.sources) {
-      let place = findPlaceStateFromPlace(findPlaceFromReference(source.place, this.petrinetState.getPetriNet()), this.petrinetState);
-      if (source.weight > place.getCurrentTokenNumber()) {
-        res = false;
-        break;
-      }
-    }
-    if (res) {
-      for (let destination of this.transition.destinations) {
-        let place = findPlaceStateFromPlace(findPlaceFromReference(destination.place, this.petrinetState.getPetriNet()), this.petrinetState)
-        if (place.getCurrentTokenNumber() + destination.weight > place.getMaxCapacity()) {
+      if (source.place.ref) {
+        let place = findPlaceStateFromPlace(source.place.ref, this.petrinetState);
+        if (source.weight > place.getCurrentTokenNumber()) {
           res = false;
           break;
         }
+      } else return false;
+    }
+    if (res) {
+      for (let destination of this.transition.destinations) {
+        if (destination.place.ref) {
+          let place = findPlaceStateFromPlace(destination.place.ref, this.petrinetState)
+          if (place.getCurrentTokenNumber() + destination.weight > place.getMaxCapacity()) {
+            res = false;
+            break;
+          }
+        } else return false;
       }
     }
     this.setDoable(res);
