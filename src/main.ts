@@ -1,6 +1,6 @@
 import path from 'path';
 import { LRPServer } from './server/server';
-import { generatePetriNetFile } from './generators/file-PetriNet-generator';
+import { generatePetriNetFile } from './file-PetriNet-generator';
 
 
 export default async function main(port?: number) {
@@ -22,47 +22,32 @@ export default async function main(port?: number) {
 
   program.command('generate')
     .description('Generate a .PetriNet file')
-    .option('-p, --places <integer>', 'Generate a .PetriNet file with a specific number of places')
-    .option('-pM, --placesMax <integer>', 'Generate a .PetriNet file with a random number of places')
-    .option('-pmM, --placesMinMax <integer>:<integer>', 'Generate a .PetriNet file with a random number of places between min and max')
+    .option('-p, --places <integer>[:<integer>]', 'Generate a .PetriNet file with a specific number of places or with a random number of places between a min and a max')
     .action((options: any) => {
       const generatedDirectoryPath = path.join(__dirname, '../examples/generated');
 
       if (options.places) {
+        let secondNumber: boolean = false;
+        let minNumber: string = '0';
+        let maxNumber: string = '0';
         for (let i = 0; i < options.places.length; i++) {
           if (options.places[i] == ':') {
-            throw Error('Incorrect command');
-          }
-        }
-        generatePetriNetFile(generatedDirectoryPath + "/specificNumberPlacesGenerated.PetriNet", generatedDirectoryPath, undefined, Number(options.places));
-      }
-      if (options.placesMax) {
-        for (let i = 0; i < options.placesMax.length; i++) {
-          if (options.placesMax[i] == ':') {
-            throw Error('Incorrect command');
-          }
-        }
-        generatePetriNetFile(generatedDirectoryPath + "/randomMaxNumberPlacesGenerated.PetriNet", generatedDirectoryPath, undefined, undefined, Number(options.placesMax));
-      }
-      if (options.placesMinMax) {
-        let secondNumber: boolean = false;
-        let minNumber: string = '';
-        let maxNumber: string = '';
-        for (let i = 0; i < options.placesMinMax.length; i++) {
-          if (options.placesMinMax[i] == ':') {
-            if (i == options.placesMinMax.length - 1)
+            if (i == options.places.length - 1)
               throw Error('Incorrect command');
             secondNumber = true;
             i++;
           }
           if (!secondNumber)
-            minNumber = minNumber + options.placesMinMax[i];
+            minNumber = minNumber + options.places[i];
           else
-            maxNumber = maxNumber + options.placesMinMax[i];
+            maxNumber = maxNumber + options.places[i];
         }
-        if (Number(minNumber) > Number(maxNumber))
+        if (Number(maxNumber) == 0)
+          generatePetriNetFile(generatedDirectoryPath + "/specificNumberPlacesGenerated.PetriNet", generatedDirectoryPath, undefined, Number(minNumber));
+        else if (Number(minNumber) > Number(maxNumber))
           throw Error('Maximum must be greater than minimum');
-        generatePetriNetFile(generatedDirectoryPath + "/randomMinMaxNumberPlacesGenerated.PetriNet", generatedDirectoryPath, undefined, undefined, Number(maxNumber), Number(minNumber));
+        else
+          generatePetriNetFile(generatedDirectoryPath + "/randomMinMaxNumberPlacesGenerated.PetriNet", generatedDirectoryPath, undefined, undefined, Number(minNumber), Number(maxNumber));
       }
       else
         generatePetriNetFile(generatedDirectoryPath + "/randomGenerated.PetriNet", generatedDirectoryPath);
