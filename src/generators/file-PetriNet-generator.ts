@@ -4,8 +4,13 @@ import path from 'path';
 import { Edge, PetriNet, Place, Transition } from '../generated/ast';
 import { extractDestinationAndName } from '../parse-util';
 
-const nbMaxTransition = 50;
-const nbMaxPlaces = 50;
+let specificNbPlaces = 0;
+
+let nbMaxTransitions = 50;
+let nbMaxPlaces = 50;
+
+let nbMinTransitions = 0;
+let nbMinPlaces = 0;
 
 let nTransition = 0;
 let nPlace = 0;
@@ -15,11 +20,13 @@ let nPlace = 0;
  * @param max, the upper limit
  * @returns, a random integer between 0 and max-1
  */
-function getRandomInt(max: number): number {
-    return Math.floor(Math.random() * max);
+function getRandomInt(min: number, max: number): number {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min) + min);
 }
 
-export function generatePetriNetFile(filePath: string, destination: string | undefined, petrinet?: PetriNet): string {
+export function generatePetriNetFile(filePath: string, destination: string | undefined, petrinet?: PetriNet, specificNumberPlaces?: number, maxPlacesLimit?: number, minPlacesLimit?: number): string {
     const data = extractDestinationAndName(filePath, destination);
     let ctx = <GeneratorContext>{
         fileName: `${data.name}.PetriNet`,
@@ -32,6 +39,9 @@ export function generatePetriNetFile(filePath: string, destination: string | und
             destination: data.destination,
         };
     }
+    if (specificNumberPlaces) specificNbPlaces = specificNumberPlaces;
+    if (maxPlacesLimit) nbMaxPlaces = maxPlacesLimit;
+    if (minPlacesLimit) nbMinPlaces = minPlacesLimit;
     return generate(ctx);
 }
 
@@ -42,7 +52,7 @@ interface GeneratorContext {
 }
 
 function generate(ctx: GeneratorContext): string {
-    const fileNode = generateJavaContent(ctx);
+    const fileNode = generatePetriNetContent(ctx);
 
     if (!fs.existsSync(ctx.destination)) {
         fs.mkdirSync(ctx.destination, { recursive: true });
@@ -69,11 +79,10 @@ function joinGenerated(content: Generated, added: Generated, noAdd?: boolean): G
     `;
 }
 
-export function generateJavaContent(ctx: GeneratorContext): Generated {
+export function generatePetriNetContent(ctx: GeneratorContext): Generated {
     if (ctx.petrinet)
         return toNode`
     PetriNet ${ctx.petrinet.name} :
-
         ${joinWithExtraNL(ctx.petrinet.places, place => generatePlaceDeclaration(place))}
         ${joinWithExtraNL(ctx.petrinet.transitions, transition => generateTransitionDeclaration(ctx, transition))}
     `;
@@ -82,19 +91,28 @@ export function generateJavaContent(ctx: GeneratorContext): Generated {
     let generatedPlaces: Generated;
     let generatedTranstions: Generated;
 
-
-    for (let i = 0; i < getRandomInt(nbMaxPlaces); i++) {
-        nPlace = nPlace + 1;
-        everyPlacesNames.push("P" + nPlace);
-        generatedPlaces = joinGenerated(generatedPlaces, generatePlaceDeclaration(undefined, everyPlacesNames[i]), true);
-    }
-    for (let i = 0; i < getRandomInt(nbMaxTransition); i++) {
-        generatedTranstions = joinGenerated(generatedTranstions, generateTransitionDeclaration(ctx, undefined, everyPlacesNames), true);
+    if (specificNbPlaces != 0) {
+        for (let i = 0; i < specificNbPlaces; i++) {
+            nPlace = nPlace + 1;
+            everyPlacesNames.push("P" + nPlace);
+            generatedPlaces = joinGenerated(generatedPlaces, generatePlaceDeclaration(undefined, everyPlacesNames[i]), true);
+        }
+        for (let i = 0; i < specificNbPlaces; i++) {
+            generatedTranstions = joinGenerated(generatedTranstions, generateTransitionDeclaration(ctx, undefined, everyPlacesNames), true);
+        }
+    } else {
+        for (let i = 0; i < getRandomInt(nbMinPlaces, nbMaxPlaces); i++) {
+            nPlace = nPlace + 1;
+            everyPlacesNames.push("P" + nPlace);
+            generatedPlaces = joinGenerated(generatedPlaces, generatePlaceDeclaration(undefined, everyPlacesNames[i]), true);
+        }
+        for (let i = 0; i < getRandomInt(nbMinTransitions, nbMaxTransitions); i++) {
+            generatedTranstions = joinGenerated(generatedTranstions, generateTransitionDeclaration(ctx, undefined, everyPlacesNames), true);
+        }
     }
 
     return toNode`
         PetriNet randomPetriNet :
-
             ${generatedPlaces}
             ${generatedTranstions}
     `;
@@ -110,12 +128,12 @@ function generatePlaceDeclaration(place?: Place, namePlace?: string): Generated 
 
     `;
 
-    const capacity = getRandomInt(20);
+    const capacity = getRandomInt(0, 20);
 
     return toNode`
     Place ${namePlace} :
         Capacity : ${capacity},
-        Initial token number : ${getRandomInt(capacity)}
+        Initial token number : ${getRandomInt(0, capacity)}
     end
     `;
 }
@@ -142,20 +160,20 @@ function generateTransitionDeclaration(ctx: GeneratorContext, transition?: Trans
     } else
         if (everyPlaces) {
             nTransition = nTransition + 1;
-            let UsedPlaces: Array<string> = [everyPlaces[getRandomInt(everyPlaces.length)]];
-            let generatedSources: Generated = generateEdgeDeclaration(ctx, undefined, [UsedPlaces[0], getRandomInt(6)]);
-            for (let i = 0; i <= getRandomInt(everyPlaces.length); i++) {
+            let UsedPlaces: Array<string> = [everyPlaces[getRandomInt(0, everyPlaces.length)]];
+            let generatedSources: Generated = generateEdgeDeclaration(ctx, undefined, [UsedPlaces[0], getRandomInt(0, 6)]);
+            for (let i = 0; i <= getRandomInt(0, everyPlaces.length); i++) {
                 if (!UsedPlaces.includes(everyPlaces[i])) {
-                    generatedSources = joinGenerated(generatedSources, generateEdgeDeclaration(ctx, undefined, [everyPlaces[i], getRandomInt(11)]));
+                    generatedSources = joinGenerated(generatedSources, generateEdgeDeclaration(ctx, undefined, [everyPlaces[i], getRandomInt(0, 11)]));
                     UsedPlaces.push(everyPlaces[i]);
                 }
             }
 
-            UsedPlaces = [everyPlaces[getRandomInt(everyPlaces.length)]];
-            let generatedDestinations: Generated = generateEdgeDeclaration(ctx, undefined, [UsedPlaces[0], getRandomInt(6)]);
-            for (let i = 0; i <= getRandomInt(everyPlaces.length); i++) {
+            UsedPlaces = [everyPlaces[getRandomInt(0, everyPlaces.length)]];
+            let generatedDestinations: Generated = generateEdgeDeclaration(ctx, undefined, [UsedPlaces[0], getRandomInt(0, 6)]);
+            for (let i = 0; i <= getRandomInt(0, everyPlaces.length); i++) {
                 if (!UsedPlaces.includes(everyPlaces[i])) {
-                    generatedDestinations = joinGenerated(generatedDestinations, generateEdgeDeclaration(ctx, undefined, [everyPlaces[i], getRandomInt(11)]));
+                    generatedDestinations = joinGenerated(generatedDestinations, generateEdgeDeclaration(ctx, undefined, [everyPlaces[i], getRandomInt(0, 11)]));
                     UsedPlaces.push(everyPlaces[i]);
                 }
             }

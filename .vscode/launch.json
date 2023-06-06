@@ -5,6 +5,22 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Launch CLI",
+            "program": "${workspaceFolder}/out/main.js",
+            "preLaunchTask": "tsc: build - tsconfig.json",
+            "outFiles": [
+                "${workspaceFolder}/out/**/*.js"
+            ],
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node",
+            "args": [
+                "run", "55000"
+            ]
+        },
+        {
             "type": "node",
             "request": "launch",
             "name": "Launch Program",
