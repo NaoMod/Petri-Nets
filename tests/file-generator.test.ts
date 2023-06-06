@@ -3,7 +3,7 @@ import * as path from 'path';
 import { PetriNet } from '../src/generated/ast';
 import { extractAstNode } from '../src/parse-util';
 import { createPetriNetServices } from '../src/petri-net-module';
-import { generatePetriNetFile } from '../src/generators/file-PetriNet-generator';
+import { generatePetriNetFile } from '../src/file-PetriNet-generator';
 
 test('Generating a file correctly, used file test.PetriNet', async () => {
     const directoryPath = path.join(__dirname, '../examples');

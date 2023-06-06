@@ -1,8 +1,8 @@
 import fs from 'fs';
 import { expandToNode as toNode, joinToNode as join, Generated, toString } from 'langium';
 import path from 'path';
-import { Edge, PetriNet, Place, Transition } from '../generated/ast';
-import { extractDestinationAndName } from '../parse-util';
+import { Edge, PetriNet, Place, Transition } from './generated/ast';
+import { extractDestinationAndName } from './parse-util';
 
 let specificNbPlaces = 0;
 
@@ -26,7 +26,7 @@ function getRandomInt(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-export function generatePetriNetFile(filePath: string, destination: string | undefined, petrinet?: PetriNet, specificNumberPlaces?: number, maxPlacesLimit?: number, minPlacesLimit?: number): string {
+export function generatePetriNetFile(filePath: string, destination: string | undefined, petrinet?: PetriNet, specificNumberPlaces?: number, minPlacesLimit?: number, maxPlacesLimit?: number): string {
     const data = extractDestinationAndName(filePath, destination);
     let ctx = <GeneratorContext>{
         fileName: `${data.name}.PetriNet`,
