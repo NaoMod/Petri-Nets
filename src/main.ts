@@ -3,7 +3,7 @@ import { LRPServer } from './server/server';
 import { generatePetriNetFile } from './file-PetriNet-generator';
 
 
-export default async function main(port?: number) {
+export default async function main() {
   const { Command } = require('commander');
   const program = new Command();
 
@@ -22,7 +22,7 @@ export default async function main(port?: number) {
 
   program.command('generate')
     .description('Generate a .PetriNet file')
-    .option('-p, --places <integer>[:<integer>]', 'Generate a .PetriNet file with a specific number of places or with a random number of places between a min and a max')
+    .option('-p, --places <number>[:<number>]', 'Generate a .PetriNet file with a specific number of places or with a random number of places between a min and a max')
     .action((options: any) => {
       const generatedDirectoryPath = path.join(__dirname, '../examples/generated');
 
