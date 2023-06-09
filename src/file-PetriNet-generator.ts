@@ -97,7 +97,7 @@ export function generatePetriNetContent(ctx: GeneratorContext): Generated {
             everyPlacesNames.push("P" + nPlace);
             generatedPlaces = joinGenerated(generatedPlaces, generatePlaceDeclaration(undefined, everyPlacesNames[i]), true);
         }
-        for (let i = 0; i < specificNbPlaces; i++) {
+        for (let i = 0; i < getRandomInt(nbMinTransitions, nbMaxTransitions); i++) {
             generatedTranstions = joinGenerated(generatedTranstions, generateTransitionDeclaration(ctx, undefined, everyPlacesNames), true);
         }
     } else {

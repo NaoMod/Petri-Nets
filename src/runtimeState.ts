@@ -68,7 +68,7 @@ export class PetriNetState {
   /**
    * Verifies wether a transition of the petrinet can still be triggered
    * 
-   * @return true if there is a triggerable transition
+   * @return true if there is a triggerable transition, false otherwise
    */
   public canEvolve(): boolean {
     if (this.currentNumberIterations < this.maxIterations) {
@@ -83,8 +83,6 @@ export class PetriNetState {
 
   /**
    * Trigger a transition, will move tokens through places
-   * 
-   * @param tokens, every token existing
    */
   public trigger(): boolean {
     let transition = this.getNextTriggerableTransition();
