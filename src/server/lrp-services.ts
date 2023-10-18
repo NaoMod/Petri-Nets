@@ -1,277 +1,234 @@
-import { NodeFileSystem } from "langium/node";
-import { Edge, PetriNet, Place, Transition } from "../generated/ast";
-import { extractAstNode } from "../parse-util";
-import { createPetriNetServices } from "../petri-net-module";
-import { PetriNetState, PlaceState, TokenState, TransitionState } from "../runtimeState";
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, Location, ModelElement, ParseArguments, ParseResponse, StepArguments, StepResponse } from "./lrp";
+import { NodeFileSystem } from 'langium/node';
+import { PetriNet, Place, Transition } from '../generated/ast';
+import { extractAstNode } from '../parse-util';
+import { createPetriNetServices } from '../petri-net-module';
+import { findPlaceStateFromPlace, PetriNetState, PlaceState } from '../runtimeState';
+import { IDRegistry } from './idRegistry';
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, ParseArguments, ParseResponse, StepArguments, StepResponse } from './lrp';
+import { ModelElementBuilder } from './modelElementBuilder';
 
-
-export class PetriNetModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(petrinet: PetriNet) {
-        this.id = petrinet.name;
-        this.type = petrinet.$type;
-        let modelPlaces: ModelElement[] = [];
-        let modelTransitions: ModelElement[] = [];
-        for (let place of petrinet.places) {
-            modelPlaces.push(new PlaceModelElement(place));
-        }
-        for (let transition of petrinet.transitions) {
-            modelTransitions.push(new TransitionModelElement(transition, petrinet));
-        }
-        this.children = { "places": modelPlaces, "transitions": modelTransitions };
-        this.refs = {};
-        this.attributes = { name: petrinet.name };
+// Breakpoint types exposed by the language runtime
+const breakpointTypes: Array<BreakpointType> = [
+    {
+        id: 'Place.empty',
+        name: 'PlaceEmpty',
+        description: 'Breaks when a place is about to become empty.',
+        parameters: [
+            {
+                name: 'Place',
+                isMultivalued: false,
+                objectType: 'Place'
+            }
+        ]
+    },
+    {
+        id: 'Place.full',
+        name: 'PlaceFull',
+        description: 'Breaks when a place is about to reach maximum capacity.',
+        parameters: [
+            {
+                name: 'Place',
+                isMultivalued: false,
+                objectType: 'Place'
+            }
+        ]
+    },
+    {
+        id: 'Transition.trigger',
+        name: 'TransitionTrigger',
+        description: 'Breaks when a transition is about to be triggered',
+        parameters: [
+            {
+                name: 'Transition',
+                isMultivalued: false,
+                objectType: 'Transition'
+            }
+        ]
     }
-}
-
-class PlaceModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(place: Place) {
-        this.id = place.name;
-        this.type = place.$type;
-        this.children = {};
-        this.refs = {};
-        this.attributes = { placeName: place.name, placeCapacity: place.maxCapacity, placeInitTokenNumber: place.initialTokenNumber };
-        if (place.$cstNode)
-            this.location = { line: place.$cstNode.range.start.line + 1, column: place.$cstNode.range.start.character, endLine: place.$cstNode.range.end.line + 1, endColumn: place.$cstNode.range.end.character };
-    }
-}
-
-class TransitionModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(transition: Transition, petrinet: PetriNet) {
-        this.id = transition.name;
-        this.type = transition.$type;
-        let allSourceEdges: Array<EdgeModelElement> = [];
-        let allDestinationEdges: Array<EdgeModelElement> = [];
-        for (let source of transition.sources) {
-            allSourceEdges.push(new EdgeModelElement(source, petrinet));
-        }
-        for (let destination of transition.destinations) {
-            allDestinationEdges.push(new EdgeModelElement(destination, petrinet));
-        }
-        this.children = { sources: allSourceEdges, destinations: allDestinationEdges };
-        this.attributes = { transitionName: transition.name };
-        this.refs = {};
-        if (transition.$cstNode)
-            this.location = { line: transition.$cstNode.range.start.line + 1, column: transition.$cstNode.range.start.character, endLine: transition.$cstNode.range.end.line + 1, endColumn: transition.$cstNode.range.end.character };
-    }
-}
-
-let iEdge = 1;
-class EdgeModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(edge: Edge, petrinet: PetriNet) {
-        this.id = "Edge" + iEdge;
-        this.type = edge.$type;
-        this.children = {};
-        if (edge.place.ref)
-            this.refs = { place: edge.place.ref.name };
-        else this.refs = {};
-        this.attributes = { weight: edge.weight };
-    }
-}
-
-export class PetriNetStateModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(petrinetState: PetriNetState) {
-        this.id = "PetriNetStateOf" + petrinetState.getPetriNet().name;
-        this.type = "PetriNetState";
-        let everyPlaces: Array<PlaceStateModelElement> = [];
-        let everyTransitions: Array<TransitionStateModelElement> = [];
-        for (let placeState of petrinetState.getPlaces()) {
-            everyPlaces.push(new PlaceStateModelElement(placeState));
-        }
-        for (let transitionState of petrinetState.getTransitions()) {
-            everyTransitions.push(new TransitionStateModelElement(transitionState));
-        }
-        this.children = { placesState: everyPlaces, transitionsState: everyTransitions };
-        this.attributes = {};
-        this.refs = { petrinet: petrinetState.getPetriNet().name };
-    }
-}
-
-class PlaceStateModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(placeState: PlaceState) {
-        this.id = placeState.getPlace().name;
-        this.type = "PlaceState";
-        let tokens: Array<TokenStateModelElement> = [];
-        for (let token of placeState.getEveryTokens()) {
-            tokens.push(new TokenStateModelElement(token));
-        }
-        this.children = { everyTokens: tokens };
-        this.refs = { place: placeState.getPlace().name };
-        this.attributes = {};
-    }
-}
-
-let iToken = 1;
-class TokenStateModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(token: TokenState) {
-        this.id = "Token" + iToken.toString();
-        this.type = "TokenState";
-        this.children = {};
-        this.refs = {};
-        this.attributes = { source: token.getSource() };
-        iToken = iToken + 1;
-    }
-}
-
-let iTransition = 1;
-class TransitionStateModelElement implements ModelElement {
-    id: string;
-    type: string;
-    children: { [key: string]: ModelElement | ModelElement[]; };
-    refs: { [key: string]: string | string[]; };
-    attributes: { [key: string]: any; };
-    location?: Location | undefined;
-
-    constructor(transitionState: TransitionState) {
-        this.id = "Transition" + iTransition.toString();
-        this.type = "TransitionState";
-        this.children = {};
-        this.attributes = { doable: transitionState.computeDoable() };
-        this.refs = { transition: transitionState.getTransition().name };
-        iTransition = iTransition + 1;
-    }
-}
-
-export const petrinets = new Map<string, PetriNet>();
-export const petrinetsState = new Map<string, PetriNetState>();
-const breakpoints: Array<BreakpointType> = [
-    { id: "Place.empty", name: "NumberOfTokenEqualTo0", description: "Breaks when the number of tokens in a place is 0", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-    { id: "Place.full", name: "NumberOfTokenEqualToMaxCapacity", description: "Breaks when the number of tokens in a place is equal to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-    { id: "Place.notEnough", name: "NumberOfTokenInfToTransitionWeight", description: "Breaks when the number of tokens in a place is inferior to the transition's weight", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-    { id: "Place.tooMany", name: "NumberOfTokenSupToMaxCapacity", description: "Breaks when the number of tokens in a place is superior to its max capacity", parameters: [{ name: "Place", isMultivalued: false, objectType: "Place" }] },
-    { id: "Transition.trigger", name: "TransitionTrigger", description: "Breaks when a transition is about to be triggered", parameters: [{ name: "Transition", isMultivalued: false, objectType: "Transition" }] }
 ];
 
+/**
+ * Implements LRP services.
+ */
 export class PetriNetsLRPServices {
+    static petrinets: Map<string, PetriNet> = new Map();
+    static petrinetStates: Map<string, PetriNetState> = new Map();
+    static registries: Map<string, IDRegistry> = new Map();
+
+    /**
+     * Parses a file and stores the generated Petri Net.
+     * 
+     * @param args
+     * @returns
+     */
     static async parse(args: ParseArguments): Promise<ParseResponse> {
-        petrinets.delete(args.sourceFile);
-        petrinetsState.delete(args.sourceFile);
+        this.petrinetStates.delete(args.sourceFile);
+
+        const newRegistry: IDRegistry = new IDRegistry();
+        this.registries.set(args.sourceFile, newRegistry);
 
         const services = createPetriNetServices(NodeFileSystem).PetriNet;
-        let petrinet = await extractAstNode<PetriNet>(args.sourceFile, services);
+        const petrinet = await extractAstNode<PetriNet>(args.sourceFile, services);
 
-        petrinets.set(args.sourceFile, petrinet);
+        this.petrinets.set(args.sourceFile, petrinet);
 
-        return { astRoot: new PetriNetModelElement(petrinet) };
+        const builder: ModelElementBuilder = new ModelElementBuilder(newRegistry);
+
+        return {
+            astRoot: builder.fromPetriNet(petrinet)
+        };
     }
 
+    /**
+     * Creates a new runtime for a given source file.
+     * The AST for the given source file must have been previously constructed.
+     * 
+     * @param args
+     * @returns
+     */
     static initExecution(args: InitArguments): InitResponse {
-        petrinetsState.delete(args.sourceFile);
-
-        if (!petrinets.has(args.sourceFile))
-            throw new Error("The petri net of this file has not been parsed yet.");
-
-        let petrinet = petrinets.get(args.sourceFile);
+        const petrinet: PetriNet | undefined = this.petrinets.get(args.sourceFile);
 
         if (!petrinet)
-            throw new Error("The petri net of this file is undefined.");
+            throw new Error('The petri net of this file is undefined.');
 
-        petrinetsState.set(args.sourceFile, new PetriNetState(petrinet));
-        return { isExecutionDone: !petrinetsState.get(args.sourceFile)?.canEvolve() };
+        this.petrinetStates.set(args.sourceFile, new PetriNetState(petrinet));
+
+        return {
+            isExecutionDone: !this.petrinetStates.get(args.sourceFile)?.canEvolve()
+        };
     }
 
+    /**
+     * Returns the current runtime state for a given source file.
+     * 
+     * @param args
+     * @returns
+     */
     static getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse {
-        if (!petrinetsState.has(args.sourceFile))
-            throw new Error("The runtime state of this file has not been initialized yet.");
-
-        let petrinetState = petrinetsState.get(args.sourceFile)
+        const petrinetState: PetriNetState | undefined = this.petrinetStates.get(args.sourceFile);
         if (!petrinetState)
-            throw new Error("The runtime state of this file is undefined.");
+            throw new Error('The runtime state of this file is undefined.');
 
-        return { runtimeStateRoot: new PetriNetStateModelElement(petrinetState) };
+        const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
+        if (!registry)
+            throw new Error('No registry.');
+
+        const builder: ModelElementBuilder = new ModelElementBuilder(registry);
+
+        return {
+            runtimeStateRoot: builder.fromPetriNetState(petrinetState)
+        };
     }
 
+    /**
+     * Performs a next step action in the runtime associated to a given source file.
+     * 
+     * @param args 
+     * @returns 
+     */
     static nextStep(args: StepArguments): StepResponse {
-        if (!petrinetsState.has(args.sourceFile))
-            throw new Error("The runtime state of this file has not been initialized yet.");
-
-        let petrinetState = petrinetsState.get(args.sourceFile);
+        const petrinetState = this.petrinetStates.get(args.sourceFile);
         if (!petrinetState)
-            throw new Error("The runtime state of this file is undefined.");
+            throw new Error('The runtime state of this file is undefined.');
+
+        const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
+        if (!registry)
+            throw new Error('No registry.')
 
         petrinetState.trigger();
-        return { isExecutionDone: !petrinetState.canEvolve() };
+        registry.clearRuntimeIds();
+
+        return {
+            isExecutionDone: !petrinetState.canEvolve()
+        };
     }
 
+    /**
+     * Retrives the breakpoint types exposed by the language runtime.
+     * 
+     * @returns 
+     */
     static getBreakpointTypes(): GetBreakpointTypesResponse {
-        return { breakpointTypes: breakpoints };
+        return {
+            breakpointTypes: breakpointTypes
+        };
     }
 
-
+    /**
+     * Checks whether a breakpoint is activated.
+     * 
+     * @param args 
+     * @returns
+     */
     static checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse {
-        if (!petrinetsState.has(args.sourceFile))
-            throw new Error("The runtime state of this file has not been initialized yet.");
-        if (!petrinetsState.get(args.sourceFile))
-            throw new Error("The runtime state of this file is undefined.");
+        const runtimeState: PetriNetState | undefined = this.petrinetStates.get(args.sourceFile);
+        if (!runtimeState)
+            throw new Error('The runtime state of this file has not been initialized yet.');
+
+        const nextTransition: Transition | null = runtimeState.getNextTriggerableTransition();
+        if (!nextTransition)
+            throw new Error('Execution already done.');
+
+        const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
+        if (!registry)
+            throw new Error('No registry.')
 
         switch (args.typeId) {
-            case "Place.empty": {
-                return { isActivated: true, message: "The place will be empty." };
+            case 'Place.empty': {
+                for (const sourceEdge of nextTransition.sources) {
+                    const sourcePlace: Place | undefined = sourceEdge.place.ref;
+                    if (!sourcePlace || args.elementId != registry.getASTId(sourcePlace)) continue;
+
+                    const sourcePlaceState: PlaceState | undefined = findPlaceStateFromPlace(sourcePlace, runtimeState);
+                    if (!sourcePlaceState) continue;
+
+                    if (sourcePlaceState.tokens.length == sourceEdge.weight) {
+                        return {
+                            isActivated: true,
+                            message: `Place ${sourcePlace.name} is about to be empty.`
+                        }
+                    }
+                }
             }
-            case "Place.full": {
-                return { isActivated: true, message: "The place will be full." };
+                break;
+
+            case 'Place.full': {
+                for (const destinationEdge of nextTransition.destinations) {
+                    const destinationPlace: Place | undefined = destinationEdge.place.ref;
+                    if (!destinationPlace || args.elementId == registry.getASTId(destinationPlace)) continue;
+
+                    const destinationPlaceState: PlaceState | undefined = findPlaceStateFromPlace(destinationPlace, runtimeState);
+                    if (!destinationPlaceState) continue;
+
+                    if (destinationPlaceState.tokens.length + destinationEdge.weight == destinationPlace.maxCapacity) {
+                        return {
+                            isActivated: true,
+                            message: `Place ${destinationPlace.name} is about to be full.`
+                        }
+                    }
+                }
             }
-            case "Place.notEnough": {
-                return { isActivated: true, message: "The place will not contain enough tokens for the next transition's trigger." };
+                break;
+
+            case 'Transition.trigger': {
+                if (args.elementId == registry.getASTId(nextTransition))
+                    return {
+                        isActivated: true,
+                        message: `Transition ${nextTransition.name} is about to be triggered.`
+                    };
             }
-            case "Place.tooMany": {
-                return { isActivated: true, message: "The place will contain too many tokens for the next transition's trigger." };
-            }
-            case "Transition.trigger": {
-                return { isActivated: true, message: "The transition is about to be triggered." };
-            }
+                break;
+
             default: {
-                throw new Error("This breakpoint id does not exist : " + args.typeId);
+                throw new Error('This breakpoint id does not exist : ' + args.typeId);
             }
         }
+
+        return {
+            isActivated: false
+        };
     }
 }
+
+

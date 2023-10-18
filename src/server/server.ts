@@ -1,6 +1,9 @@
 import { Server } from 'jayson';
 import { PetriNetsLRPServices } from './lrp-services';
 
+/**
+ * TCP server running at a given port and providing LRP services.
+ */
 export class LRPServer {
     private server: Server;
 
@@ -27,7 +30,7 @@ export class LRPServer {
         });
     }
 
-    start(port?: number): void {
+    public start(port?: number): void {
         if (!port)
             this.server.tcp().listen(49152, 'localhost');
         this.server.tcp().listen(port, 'localhost');

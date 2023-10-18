@@ -1,6 +1,6 @@
 import path from 'path';
 import { LRPServer } from './server/server';
-import { generatePetriNetFile } from './file-PetriNet-generator';
+import { generatePetriNetFile } from './petrinet-generator';
 
 
 export default async function main() {
@@ -8,8 +8,8 @@ export default async function main() {
   const program = new Command();
 
   program.command('run')
-    .description('Run a server to a specific port')
-    .argument('<number>', 'port number')
+    .description('Run a server at a specific port')
+    .argument('<number>', 'port')
     .action(async (port: number) => {
       const server = new LRPServer();
       server.start(port);
