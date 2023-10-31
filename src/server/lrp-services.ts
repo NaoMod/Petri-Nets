@@ -2,9 +2,9 @@ import { NodeFileSystem } from 'langium/node';
 import { PetriNet, Place, Transition } from '../generated/ast';
 import { extractAstNode } from '../parse-util';
 import { createPetriNetServices } from '../petri-net-module';
-import { findPlaceStateFromPlace, PetriNetState, PlaceState } from '../runtimeState';
+import { findPlaceStateFromPlace, PetriNetState, PlaceState, TransitionState } from '../runtimeState';
 import { IDRegistry } from './idRegistry';
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, InitArguments, InitResponse, ParseArguments, ParseResponse, StepArguments, StepResponse } from './lrp';
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetSteppingModesResponse, InitArguments, InitializeResponse, InitResponse, ParseArguments, ParseResponse, StepArguments, SteppingMode, StepResponse } from './lrp';
 import { ModelElementBuilder } from './modelElementBuilder';
 
 // Breakpoint types exposed by the language runtime
@@ -47,6 +47,15 @@ const breakpointTypes: Array<BreakpointType> = [
     }
 ];
 
+// Stepping modes exposed by the language runtime
+const steppingModes: Array<SteppingMode> = [
+    {
+        id: "atomic",
+        name: "Atomic",
+        description: "Only performs atomic steps."
+    }
+];
+
 /**
  * Implements LRP services.
  */
@@ -54,6 +63,18 @@ export class PetriNetsLRPServices {
     static petrinets: Map<string, PetriNet> = new Map();
     static petrinetStates: Map<string, PetriNetState> = new Map();
     static registries: Map<string, IDRegistry> = new Map();
+
+    static availableSteps: Map<string, TransitionState[]> = new Map();
+
+    static initialize(): InitializeResponse {
+        return {
+            capabilities: {
+                supportsThreads: false,
+                supportsStackTrace: false,
+                supportsScopes: false
+            }
+        };
+    }
 
     /**
      * Parses a file and stores the generated Petri Net.
@@ -94,6 +115,8 @@ export class PetriNetsLRPServices {
 
         this.petrinetStates.set(args.sourceFile, new PetriNetState(petrinet));
 
+        this.availableSteps.set(args.sourceFile, []);
+
         return {
             isExecutionDone: !this.petrinetStates.get(args.sourceFile)?.canEvolve()
         };
@@ -127,7 +150,7 @@ export class PetriNetsLRPServices {
      * @param args 
      * @returns 
      */
-    static nextStep(args: StepArguments): StepResponse {
+    static executeStep(args: StepArguments): StepResponse {
         const petrinetState = this.petrinetStates.get(args.sourceFile);
         if (!petrinetState)
             throw new Error('The runtime state of this file is undefined.');
@@ -136,7 +159,18 @@ export class PetriNetsLRPServices {
         if (!registry)
             throw new Error('No registry.')
 
-        petrinetState.trigger();
+        var transitionToTrigger: TransitionState | undefined;
+        
+        if (args.stepId) {
+            transitionToTrigger = this.availableSteps.get(args.sourceFile)![+args.stepId];
+        } else {
+            transitionToTrigger = petrinetState.transitionStates.find(transition => transition.isTriggerable);
+        }
+
+        if (!transitionToTrigger)
+            throw new Error('No transition to trigger.')
+        
+        petrinetState.trigger(transitionToTrigger.transition);
         registry.clearRuntimeIds();
 
         return {
@@ -145,7 +179,7 @@ export class PetriNetsLRPServices {
     }
 
     /**
-     * Retrives the breakpoint types exposed by the language runtime.
+     * Retrieves the breakpoint types exposed by the language runtime.
      * 
      * @returns 
      */
@@ -166,13 +200,13 @@ export class PetriNetsLRPServices {
         if (!runtimeState)
             throw new Error('The runtime state of this file has not been initialized yet.');
 
-        const nextTransition: Transition | null = runtimeState.getNextTriggerableTransition();
+        const nextTransition: Transition | undefined = runtimeState.transitionStates.find(transition => transition.isTriggerable)?.transition;
         if (!nextTransition)
             throw new Error('Execution already done.');
 
         const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
         if (!registry)
-            throw new Error('No registry.')
+            throw new Error('No registry.');
 
         switch (args.typeId) {
             case 'Place.empty': {
@@ -228,6 +262,46 @@ export class PetriNetsLRPServices {
         return {
             isActivated: false
         };
+    }
+
+    /**
+     * Retrieves the stepping modes exposed by the language runtime.
+     * 
+     * @returns 
+     */
+    static getSteppingModes(): GetSteppingModesResponse {
+        return {
+            steppingModes: steppingModes
+        };
+    }
+
+    static getAvailableSteps(args: GetAvailableStepsArguments): GetAvailableStepsResponse {
+        const petrinetState = this.petrinetStates.get(args.sourceFile);
+        if (!petrinetState)
+            throw new Error('The runtime state of this file is undefined.');
+
+        const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
+        if (!registry)
+            throw new Error('No registry.')
+
+        switch (args.steppingModeId) {
+            case 'atomic':
+                const triggerableTransitions: TransitionState[] = petrinetState.transitionStates.filter(transition => transition.isTriggerable);
+                this.availableSteps.set(args.sourceFile, triggerableTransitions);
+
+                return {
+                    availableSteps: triggerableTransitions.map((transition, index) => {
+                        return {
+                            id: String(index),
+                            name: transition.transition.name,
+                            isComposite: false
+                        }
+                    })
+                };
+
+            default:
+                throw new Error(`Unknown stepping mode id ${args.steppingModeId}.`);
+        }
     }
 }
 

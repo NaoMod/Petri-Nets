@@ -9,6 +9,9 @@ export class LRPServer {
 
     constructor() {
         this.server = new Server({
+            'initialize': function (args: any[], callback: Function) {
+                callback(null, PetriNetsLRPServices.initialize());
+            },
             'parse': async function (args: any[], callback: Function) {
                 callback(null, await PetriNetsLRPServices.parse(args[0]));
             },
@@ -18,14 +21,20 @@ export class LRPServer {
             'getRuntimeState': function (args: any[], callback: Function) {
                 callback(null, PetriNetsLRPServices.getRuntimeState(args[0]));
             },
-            'nextStep': function (args: any[], callback: Function) {
-                callback(null, PetriNetsLRPServices.nextStep(args[0]));
+            'executeStep': function (args: any[], callback: Function) {
+                callback(null, PetriNetsLRPServices.executeStep(args[0]));
             },
             'getBreakpointTypes': function (args: any[], callback: Function) {
                 callback(null, PetriNetsLRPServices.getBreakpointTypes());
             },
             'checkBreakpoint': function (args: any[], callback: Function) {
                 callback(null, PetriNetsLRPServices.checkBreakpoint(args[0]));
+            },
+            'getSteppingModes': function (args: any[], callback: Function) {
+                callback(null, PetriNetsLRPServices.getSteppingModes());
+            },
+            'getAvailableSteps': function (args: any[], callback: Function) {
+                callback(null, PetriNetsLRPServices.getAvailableSteps(args[0]));
             }
         });
     }

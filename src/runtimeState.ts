@@ -32,9 +32,12 @@ export class PetriNetState {
       const placeState = new PlaceState(this, place, place.initialTokenNumber);
       this.placeStates.push(placeState);
     }
+
     for (const transition of petrinet.transitions) {
       this.transitionStates.push(new TransitionState(this, transition));
     }
+
+    this.refreshTransitions();
   }
 
 
@@ -42,47 +45,27 @@ export class PetriNetState {
     return this._currentIteration;
   }
 
-
-  /**
-   * Will find the next triggerable Transition
-   * 
-   * @returns the next triggerabconstransition or null if there's none
-   */
-  public getNextTriggerableTransition(): Transition | null {
-    if (this.canEvolve()) {
-      for (const transitionState of this.transitionStates) {
-        if (transitionState.isTriggerable) return transitionState.transition;
-      }
-    }
-    return null;
-  }
-
-
   /**
    * Verifies wether a transition of the petrinet can still be triggered
    * 
    * @return true if there is a triggerable transition, false otherwise
    */
   public canEvolve(): boolean {
-    if (this._currentIteration < this.maxIterations) {
-      for (const transitionState of this.transitionStates) {
-        if (transitionState.computeTriggerable()) {
-          return true;
-        }
+    if (this._currentIteration >= this.maxIterations) return false;
+
+    for (const transitionState of this.transitionStates) {
+      if (transitionState.isTriggerable) {
+        return true;
       }
     }
+    
     return false;
   }
 
   /**
    * Trigger a transition, will move tokens through places
    */
-  public trigger(): boolean {
-    const transition: Transition | null = this.getNextTriggerableTransition();
-
-    if (transition == null)
-      return false;
-
+  public trigger(transition: Transition): boolean {
     for (const source of transition.sources) {
       if (!source.place.ref)
         return false;
@@ -105,8 +88,15 @@ export class PetriNetState {
       destinationPlaceState.addTokens(destination.weight, transition);
     }
 
+    this.refreshTransitions();
     this._currentIteration = this._currentIteration + 1;
     return true;
+  }
+
+  private refreshTransitions(): void {
+    for (const transition of this.transitionStates) {
+      transition.computeTriggerable();
+    }
   }
 }
 
@@ -156,16 +146,12 @@ export class TransitionState {
     return this._isTriggerable;
   }
 
-  /**
-   * Will check if the transition is doable, will change its attribute doable.
-   * @returns true if the transition is doable, false otherwise
-   */
-  public computeTriggerable(): boolean {
+  public computeTriggerable(): void {
     let res: boolean = true;
 
     for (const source of this.transition.sources) {
       if (!source.place.ref)
-        return false;
+        return;
 
       const placeState: PlaceState | undefined = findPlaceStateFromPlace(source.place.ref, this.petrinetState);
       if (!placeState)
@@ -180,7 +166,7 @@ export class TransitionState {
     if (res) {
       for (const destination of this.transition.destinations) {
         if (!destination.place.ref)
-          return false;
+          return;
 
         const placeState: PlaceState | undefined = findPlaceStateFromPlace(destination.place.ref, this.petrinetState);
         if (!placeState)
@@ -194,6 +180,5 @@ export class TransitionState {
     }
 
     this._isTriggerable = res;
-    return res;
   }
 }

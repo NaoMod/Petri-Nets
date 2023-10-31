@@ -3,6 +3,9 @@
  * to interface with a debugger through LRP.
  */
 export interface LRPServices {
+
+    initialize(): Promise<InitializeResponse>;
+
     /**
      * Parses a file and stores the generated AST.
      * 
@@ -72,7 +75,12 @@ export interface GetBreakpointTypesResponse {
     breakpointTypes: BreakpointType[];
 }
 
-export interface StepArguments extends Arguments { }
+export interface StepArguments extends Arguments {
+    /* Thread in which to perform one step. */
+    threadId?: number;
+
+    stepId?: string;
+}
 
 export interface StepResponse {
     /** True if the execution is done, false otherwise. */
@@ -192,4 +200,42 @@ export enum PrimitiveType {
     BOOLEAN = 'boolean',
     STRING = 'string',
     NUMBER = 'number'
+}
+
+export interface InitializeResponse {
+    capabilities: LanguageRuntimeCapabilities;
+}
+
+export interface LanguageRuntimeCapabilities {
+    supportsThreads: boolean;
+    supportsStackTrace: boolean;
+    supportsScopes: boolean;
+}
+
+export interface SteppingMode {
+    id: string;
+    name: string;
+    description: string;
+}
+
+export interface GetSteppingModesResponse {
+    steppingModes: SteppingMode[];
+}
+
+export interface GetAvailableStepsArguments extends Arguments {
+    steppingModeId: string;
+
+    /** If no id, return the top-level steps. */
+    compositeStepId?: string;
+}
+
+export interface GetAvailableStepsResponse {
+    availableSteps: Step[];
+}
+
+export interface Step {
+    id: string;
+    name: string;
+    description?: string;
+    isComposite: boolean;
 }

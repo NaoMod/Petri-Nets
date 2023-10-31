@@ -112,7 +112,9 @@ export class ModelElementBuilder {
             refs: {
                 petrinet: this.registry.getOrCreateASTId(petriNetState.petrinet)
             },
-            attributes: {}
+            attributes: {
+                currentIteration: petriNetState.currentIteration
+            }
         };
     }
 
@@ -124,9 +126,7 @@ export class ModelElementBuilder {
             refs: {
                 transition: this.registry.getOrCreateASTId(transitionState.transition)
             },
-            attributes: {
-                isTriggerable: transitionState.computeTriggerable()
-            }
+            attributes: { }
         };
     }
 
