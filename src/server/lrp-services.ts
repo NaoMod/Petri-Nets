@@ -5,7 +5,7 @@ import { createPetriNetServices } from '../petri-net-module';
 import { PetriNetState, PlaceState, TransitionState, findPlaceStateFromPlace } from '../runtimeState';
 import { IDRegistry } from './idRegistry';
 import { AstNodeLocator } from './locator';
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetSteppingModesResponse, InitArguments, InitResponse, InitializeResponse, ParseArguments, ParseResponse, StepArguments, StepResponse, SteppingMode } from './lrp';
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetStepLocationArguments, GetStepLocationResponse, GetSteppingModesResponse, InitArguments, InitResponse, InitializeResponse, ParseArguments, ParseResponse, StepArguments, StepResponse, SteppingMode } from './lrp';
 import { ModelElementBuilder } from './modelElementBuilder';
 
 // Breakpoint types exposed by the language runtime
@@ -295,14 +295,22 @@ export class PetriNetsLRPServices {
                         return {
                             id: String(index),
                             name: transition.transition.name,
-                            isComposite: false,
-                            location: AstNodeLocator.getLocation(transition.transition)
+                            isComposite: false
                         }
                     })
                 };
 
             default:
                 throw new Error(`Unknown stepping mode id ${args.steppingModeId}.`);
+        }
+    }
+
+    static getStepLocation(args: GetStepLocationArguments): GetStepLocationResponse {
+        const transitionState: TransitionState | undefined = this.availableSteps.get(args.sourceFile)?.at(+args.stepId);
+        if (!transitionState) throw new Error('No such step.');
+
+        return {
+            location: AstNodeLocator.getLocation(transitionState.transition)
         }
     }
 }

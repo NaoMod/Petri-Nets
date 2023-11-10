@@ -35,7 +35,10 @@ export class LRPServer {
             },
             'getAvailableSteps': function (args: any[], callback: Function) {
                 callback(null, PetriNetsLRPServices.getAvailableSteps(args[0]));
-            }
+            },
+            'getStepLocation': function (args: any[], callback: Function) {
+                callback(null, PetriNetsLRPServices.getStepLocation(args[0]));
+            },
         });
     }
 

@@ -238,5 +238,12 @@ export interface Step {
     name: string;
     description?: string;
     isComposite: boolean;
+}
+
+export interface GetStepLocationArguments extends Arguments {
+    stepId: string;
+}
+
+export interface GetStepLocationResponse {
     location?: Location;
 }
