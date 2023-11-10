@@ -2,9 +2,10 @@ import { NodeFileSystem } from 'langium/node';
 import { PetriNet, Place, Transition } from '../generated/ast';
 import { extractAstNode } from '../parse-util';
 import { createPetriNetServices } from '../petri-net-module';
-import { findPlaceStateFromPlace, PetriNetState, PlaceState, TransitionState } from '../runtimeState';
+import { PetriNetState, PlaceState, TransitionState, findPlaceStateFromPlace } from '../runtimeState';
 import { IDRegistry } from './idRegistry';
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetSteppingModesResponse, InitArguments, InitializeResponse, InitResponse, ParseArguments, ParseResponse, StepArguments, SteppingMode, StepResponse } from './lrp';
+import { AstNodeLocator } from './locator';
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetSteppingModesResponse, InitArguments, InitResponse, InitializeResponse, ParseArguments, ParseResponse, StepArguments, StepResponse, SteppingMode } from './lrp';
 import { ModelElementBuilder } from './modelElementBuilder';
 
 // Breakpoint types exposed by the language runtime
@@ -159,8 +160,8 @@ export class PetriNetsLRPServices {
         if (!registry)
             throw new Error('No registry.')
 
-        var transitionToTrigger: TransitionState | undefined;
-        
+        let transitionToTrigger: TransitionState | undefined;
+
         if (args.stepId) {
             transitionToTrigger = this.availableSteps.get(args.sourceFile)![+args.stepId];
         } else {
@@ -169,7 +170,7 @@ export class PetriNetsLRPServices {
 
         if (!transitionToTrigger)
             throw new Error('No transition to trigger.')
-        
+
         petrinetState.trigger(transitionToTrigger.transition);
         registry.clearRuntimeIds();
 
@@ -294,7 +295,8 @@ export class PetriNetsLRPServices {
                         return {
                             id: String(index),
                             name: transition.transition.name,
-                            isComposite: false
+                            isComposite: false,
+                            location: AstNodeLocator.getLocation(transition.transition)
                         }
                     })
                 };

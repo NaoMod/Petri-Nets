@@ -2,7 +2,8 @@ import { AstNode, Reference } from "langium";
 import { Edge, PetriNet, Place, Transition } from "src/generated/ast";
 import { PetriNetState, PlaceState, TokenState, TransitionState } from "src/runtimeState";
 import { IDRegistry } from "./idRegistry";
-import { Location, ModelElement } from "./lrp";
+import { AstNodeLocator } from "./locator";
+import { ModelElement } from "./lrp";
 
 /**
  * Builds model elements that can be communicated through LRP from elements of
@@ -37,6 +38,8 @@ export class ModelElementBuilder {
     }
 
     public fromPlace(place: Place): ModelElement {
+        if (!place.$cstNode) throw new Error("No location."); 
+
         return {
             id: this.registry.getOrCreateASTId(place),
             type: place.$type,
@@ -47,11 +50,13 @@ export class ModelElementBuilder {
                 placeCapacity: place.maxCapacity,
                 placeInitTokenNumber: place.initialTokenNumber
             },
-            location: this.getLocation(place)
+            location: AstNodeLocator.getLocation(place)
         };
     }
 
     public fromTransition(transition: Transition): ModelElement {
+        if (!transition.$cstNode) throw new Error("No location."); 
+
         const sourceEdges: ModelElement[] = [];
         for (const source of transition.sources) {
             sourceEdges.push(this.fromEdge(source));
@@ -73,7 +78,7 @@ export class ModelElementBuilder {
             attributes: {
                 transitionName: transition.name
             },
-            location: this.getLocation(transition)
+            location: AstNodeLocator.getLocation(transition)
         };
     }
 
@@ -126,7 +131,7 @@ export class ModelElementBuilder {
             refs: {
                 transition: this.registry.getOrCreateASTId(transitionState.transition)
             },
-            attributes: { }
+            attributes: {}
         };
     }
 
@@ -162,17 +167,6 @@ export class ModelElementBuilder {
                 } :
                 {},
             attributes: {}
-        };
-    }
-
-    private getLocation(node: AstNode): Location {
-        if (!node.$cstNode) throw new Error('Location expected.');
-
-        return {
-            line: node.$cstNode.range.start.line + 1,
-            column: node.$cstNode.range.start.character,
-            endLine: node.$cstNode.range.end.line + 1,
-            endColumn: node.$cstNode.range.end.character
         };
     }
 

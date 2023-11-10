@@ -238,4 +238,5 @@ export interface Step {
     name: string;
     description?: string;
     isComposite: boolean;
+    location?: Location;
 }
