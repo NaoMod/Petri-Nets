@@ -9,9 +9,6 @@ export class LRPServer {
 
     constructor() {
         this.server = new Server({
-            'initialize': function (args: any[], callback: Function) {
-                callback(null, PetriNetsLRPServices.initialize());
-            },
             'parse': async function (args: any[], callback: Function) {
                 callback(null, await PetriNetsLRPServices.parse(args[0]));
             },

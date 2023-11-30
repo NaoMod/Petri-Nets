@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import { NodeFileSystem } from 'langium/node';
 import { PetriNet, Place, Transition } from '../generated/ast';
 import { extractAstNode } from '../parse-util';
@@ -5,7 +6,7 @@ import { createPetriNetServices } from '../petri-net-module';
 import { PetriNetState, PlaceState, TransitionState, findPlaceStateFromPlace } from '../runtimeState';
 import { IDRegistry } from './idRegistry';
 import { AstNodeLocator } from './locator';
-import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetStepLocationArguments, GetStepLocationResponse, GetSteppingModesResponse, InitArguments, InitResponse, InitializeResponse, ParseArguments, ParseResponse, StepArguments, StepResponse, SteppingMode } from './lrp';
+import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetStepLocationArguments, GetStepLocationResponse, GetSteppingModesResponse, InitArguments, InitResponse, ParseArguments, ParseResponse, StepArguments, StepResponse, SteppingMode } from './lrp';
 import { ModelElementBuilder } from './modelElementBuilder';
 
 // Breakpoint types exposed by the language runtime
@@ -65,17 +66,7 @@ export class PetriNetsLRPServices {
     static petrinetStates: Map<string, PetriNetState> = new Map();
     static registries: Map<string, IDRegistry> = new Map();
 
-    static availableSteps: Map<string, TransitionState[]> = new Map();
-
-    static initialize(): InitializeResponse {
-        return {
-            capabilities: {
-                supportsThreads: false,
-                supportsStackTrace: false,
-                supportsScopes: false
-            }
-        };
-    }
+    static availableSteps: Map<string, Map<string, TransitionStep>> = new Map();
 
     /**
      * Parses a file and stores the generated Petri Net.
@@ -116,7 +107,7 @@ export class PetriNetsLRPServices {
 
         this.petrinetStates.set(args.sourceFile, new PetriNetState(petrinet));
 
-        this.availableSteps.set(args.sourceFile, []);
+        this.availableSteps.set(args.sourceFile, new Map());
 
         return {
             isExecutionDone: !this.petrinetStates.get(args.sourceFile)?.canEvolve()
@@ -160,22 +151,31 @@ export class PetriNetsLRPServices {
         if (!registry)
             throw new Error('No registry.')
 
-        let transitionToTrigger: TransitionState | undefined;
+        const steps: Map<string, TransitionStep> | undefined = this.availableSteps.get(args.sourceFile);
+        if (!steps)
+            throw new Error('Available steps not computed.');
+
+        let selectedStep: TransitionStep | undefined;
 
         if (args.stepId) {
-            transitionToTrigger = this.availableSteps.get(args.sourceFile)![+args.stepId];
+            selectedStep = steps.get(args.stepId);
         } else {
-            transitionToTrigger = petrinetState.transitionStates.find(transition => transition.isTriggerable);
+            const triggerableTransition: TransitionState | undefined = petrinetState.transitionStates.find(transition => transition.isTriggerable);
+            if (!triggerableTransition)
+                throw new Error('No transition to trigger.');
+            selectedStep = new TransitionStep(triggerableTransition);
         }
 
-        if (!transitionToTrigger)
-            throw new Error('No transition to trigger.')
+        if (!selectedStep)
+            throw new Error(`No step with id ${args.stepId}.`);
 
-        petrinetState.trigger(transitionToTrigger.transition);
+        petrinetState.trigger(selectedStep.transitionState.transition);
         registry.clearRuntimeIds();
+        steps.clear();
 
         return {
-            isExecutionDone: !petrinetState.canEvolve()
+            isExecutionDone: !petrinetState.canEvolve(),
+            completedSteps: [selectedStep.id]
         };
     }
 
@@ -201,7 +201,7 @@ export class PetriNetsLRPServices {
         if (!runtimeState)
             throw new Error('The runtime state of this file has not been initialized yet.');
 
-        const nextTransition: Transition | undefined = runtimeState.transitionStates.find(transition => transition.isTriggerable)?.transition;
+        const nextTransition: Transition | undefined = args.stepId ? this.availableSteps.get(args.sourceFile)?.get(args.stepId)?.transitionState.transition : runtimeState.transitionStates.find(transition => transition.isTriggerable)?.transition;
         if (!nextTransition)
             throw new Error('Execution already done.');
 
@@ -256,7 +256,7 @@ export class PetriNetsLRPServices {
                 break;
 
             default: {
-                throw new Error('This breakpoint id does not exist : ' + args.typeId);
+                throw new Error(`The breakpoint id ${args.typeId} does not exist.`);
             }
         }
 
@@ -287,14 +287,20 @@ export class PetriNetsLRPServices {
 
         switch (args.steppingModeId) {
             case 'atomic':
+                if (petrinetState.currentIteration == petrinetState.maxIterations) return { availableSteps: [] };
+
                 const triggerableTransitions: TransitionState[] = petrinetState.transitionStates.filter(transition => transition.isTriggerable);
-                this.availableSteps.set(args.sourceFile, triggerableTransitions);
+                const steps: Map<string, TransitionStep> = new Map(triggerableTransitions.map(t => {
+                    const step: TransitionStep = new TransitionStep(t);
+                    return [step.id, step];
+                }));
+                this.availableSteps.set(args.sourceFile, steps);
 
                 return {
-                    availableSteps: triggerableTransitions.map((transition, index) => {
+                    availableSteps: Array.from(steps.values()).map(step => {
                         return {
-                            id: String(index),
-                            name: transition.transition.name,
+                            id: step.id,
+                            name: step.transitionState.transition.name,
                             isComposite: false
                         }
                     })
@@ -306,12 +312,25 @@ export class PetriNetsLRPServices {
     }
 
     static getStepLocation(args: GetStepLocationArguments): GetStepLocationResponse {
-        const transitionState: TransitionState | undefined = this.availableSteps.get(args.sourceFile)?.at(+args.stepId);
-        if (!transitionState) throw new Error('No such step.');
+        const steps: Map<string, TransitionStep> | undefined = this.availableSteps.get(args.sourceFile);
+        if (!steps)
+            throw new Error('Available steps not computed.');
+
+        const selectedStep: TransitionStep | undefined = steps.get(args.stepId);
+        if (!selectedStep)
+            throw new Error(`No step with id ${args.stepId}.`);
 
         return {
-            location: AstNodeLocator.getLocation(transitionState.transition)
+            location: AstNodeLocator.getLocation(selectedStep.transitionState.transition)
         }
+    }
+}
+
+class TransitionStep {
+    readonly id: string;
+
+    constructor(readonly transitionState: TransitionState) {
+        this.id = randomUUID();
     }
 }
 

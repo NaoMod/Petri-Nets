@@ -4,8 +4,6 @@
  */
 export interface LRPServices {
 
-    initialize(): Promise<InitializeResponse>;
-
     /**
      * Parses a file and stores the generated AST.
      * 
@@ -47,7 +45,6 @@ export interface LRPServices {
      */
     checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse;
 }
-
 interface Arguments {
     /** Source file targeted by the service call. */
     sourceFile: string;
@@ -77,14 +74,13 @@ export interface GetBreakpointTypesResponse {
 
 export interface StepArguments extends Arguments {
     /* Thread in which to perform one step. */
-    threadId?: number;
-
     stepId?: string;
 }
 
 export interface StepResponse {
     /** True if the execution is done, false otherwise. */
     isExecutionDone: boolean;
+    completedSteps: string[];
 }
 
 export interface GetRuntimeStateArguments extends Arguments { }
@@ -95,6 +91,8 @@ export interface GetRuntimeStateResponse {
 }
 
 export interface CheckBreakpointArguments extends Arguments {
+    stepId?: string;
+
     /** Identifier of the breakpoint type. */
     typeId: string;
 
@@ -202,16 +200,6 @@ export enum PrimitiveType {
     NUMBER = 'number'
 }
 
-export interface InitializeResponse {
-    capabilities: LanguageRuntimeCapabilities;
-}
-
-export interface LanguageRuntimeCapabilities {
-    supportsThreads: boolean;
-    supportsStackTrace: boolean;
-    supportsScopes: boolean;
-}
-
 export interface SteppingMode {
     id: string;
     name: string;
@@ -230,6 +218,7 @@ export interface GetAvailableStepsArguments extends Arguments {
 }
 
 export interface GetAvailableStepsResponse {
+    parentStepId?: string;
     availableSteps: Step[];
 }
 
