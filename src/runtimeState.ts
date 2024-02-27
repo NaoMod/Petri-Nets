@@ -1,5 +1,7 @@
-
 import { PetriNet, Place, Transition } from './generated/ast';
+import { IDRegistry } from './server/idRegistry';
+import * as LRP from './server/lrp';
+import { Step, TransitionStep } from './server/steps';
 
 /**
   * Return the placeState corresponding to a place
@@ -24,6 +26,9 @@ export class PetriNetState {
   readonly placeStates: Array<PlaceState> = [];
   readonly transitionStates: Array<TransitionState> = [];
 
+  private _availableSteps?: Map<string, Step>;
+  private _ongoingCompositeStep?: Step;
+
   constructor(petrinet: PetriNet) {
     this.petrinet = petrinet;
     this._currentIteration = 0;
@@ -36,30 +41,10 @@ export class PetriNetState {
     for (const transition of petrinet.transitions) {
       this.transitionStates.push(new TransitionState(this, transition));
     }
-
-    this.refreshTransitions();
   }
-
 
   public get currentIteration(): number {
     return this._currentIteration;
-  }
-
-  /**
-   * Verifies wether a transition of the petrinet can still be triggered
-   * 
-   * @return true if there is a triggerable transition, false otherwise
-   */
-  public canEvolve(): boolean {
-    if (this._currentIteration >= this.maxIterations) return false;
-
-    for (const transitionState of this.transitionStates) {
-      if (transitionState.isTriggerable) {
-        return true;
-      }
-    }
-    
-    return false;
   }
 
   /**
@@ -88,15 +73,73 @@ export class PetriNetState {
       destinationPlaceState.addTokens(destination.weight, transition);
     }
 
-    this.refreshTransitions();
     this._currentIteration = this._currentIteration + 1;
     return true;
   }
 
-  private refreshTransitions(): void {
-    for (const transition of this.transitionStates) {
-      transition.computeTriggerable();
+  public enterCompositeStep(stepId: string): void {
+    if (this._availableSteps === undefined) throw new Error('No steps to compute from.');
+
+    const selectedStep: Step | undefined = this._availableSteps.get(stepId);
+    if (selectedStep === undefined) throw new Error(`No step with id ${stepId}.`);
+    if (!selectedStep.isComposite) throw new Error('Step must be composite.');
+
+    this._ongoingCompositeStep = selectedStep;
+    this._availableSteps = undefined;
+  }
+
+  public executeAtomicStep(stepId: string): Step {
+    if (this._availableSteps === undefined) throw new Error('No steps to compute from.');
+
+    const selectedStep: Step | undefined = this._availableSteps.get(stepId);
+    if (selectedStep === undefined) throw new Error(`No step with id ${stepId}.`);
+
+    selectedStep.execute();
+    this._ongoingCompositeStep = selectedStep.findOngoingStep();
+    this._availableSteps = undefined;
+
+    return selectedStep;
+  }
+
+  public checkBreakpoint(typeId: string, stepId: string, bindings: LRP.Bindings, registry: IDRegistry): LRP.CheckBreakpointResponse {
+    if (this._availableSteps === undefined) throw new Error('No steps to compute from.');
+
+    const selectedStep: Step | undefined = this._availableSteps.get(stepId);
+    if (selectedStep === undefined) throw new Error(`No step with id ${stepId}.`);
+
+    const message: string | undefined = selectedStep.checkBreakpoint(typeId, bindings, registry);
+
+    if (message === undefined) {
+      return { isActivated: false };
     }
+
+    return {
+      isActivated: true,
+      message: message
+    }
+  }
+
+  public computeAvailableStep(): Map<string, Step> {
+    if (this._availableSteps !== undefined) return new Map(this._availableSteps);
+    
+    this._availableSteps = new Map();
+
+    for (const transitionState of this.transitionStates) {
+      if (transitionState.isTriggerable()) {
+        const step: TransitionStep = new TransitionStep(transitionState.transition, this);
+        this._availableSteps.set(step.id, step);
+      }
+    }
+
+    return this._availableSteps;
+  }
+
+  public get ongoingCompositeStep(): Step | undefined {
+    return this._ongoingCompositeStep;
+  }
+
+  public get availableSteps(): Map<string, Step> | undefined {
+    return this._availableSteps !== undefined ? new Map(this._availableSteps) : undefined;
   }
 }
 
@@ -134,51 +177,31 @@ export class TokenState {
 export class TransitionState {
   readonly petrinetState: PetriNetState;
   readonly transition: Transition;
-  private _isTriggerable: boolean;
 
   constructor(petrinet: PetriNetState, transition: Transition) {
     this.petrinetState = petrinet;
     this.transition = transition;
-    this._isTriggerable = false;
   }
 
-  public get isTriggerable(): boolean {
-    return this._isTriggerable;
-  }
-
-  public computeTriggerable(): void {
-    let res: boolean = true;
-
+  public isTriggerable(): boolean {
     for (const source of this.transition.sources) {
-      if (!source.place.ref)
-        return;
+      if (source.place.ref === undefined) throw new Error('No place state associated.');
 
       const placeState: PlaceState | undefined = findPlaceStateFromPlace(source.place.ref, this.petrinetState);
-      if (!placeState)
-        throw new Error('No place state associated.');
+      if (placeState === undefined) throw new Error(`No runtime state for place ${source.place.ref.name}.`);
 
-      if (source.weight > placeState.tokens.length) {
-        res = false;
-        break;
-      }
+      if (source.weight > placeState.tokens.length) return false;
     }
 
-    if (res) {
-      for (const destination of this.transition.destinations) {
-        if (!destination.place.ref)
-          return;
+    for (const destination of this.transition.destinations) {
+      if (!destination.place.ref) throw new Error('No place state associated.');
 
-        const placeState: PlaceState | undefined = findPlaceStateFromPlace(destination.place.ref, this.petrinetState);
-        if (!placeState)
-          throw new Error('No place state associated.');
+      const placeState: PlaceState | undefined = findPlaceStateFromPlace(destination.place.ref, this.petrinetState);
+      if (!placeState) throw new Error(`No runtime state for place ${destination.place.ref.name}.`);
 
-        if (placeState.tokens.length + destination.weight > placeState.place.maxCapacity) {
-          res = false;
-          break;
-        }
-      }
+      if (placeState.tokens.length + destination.weight > placeState.place.maxCapacity) return false;
     }
 
-    this._isTriggerable = res;
+    return true;
   }
 }

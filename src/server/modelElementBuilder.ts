@@ -25,7 +25,7 @@ export class ModelElementBuilder {
 
         return {
             id: this.registry.getOrCreateASTId(petrinet),
-            type: petrinet.$type,
+            types: [petrinet.$type],
             children: {
                 'places': modelPlaces,
                 'transitions': modelTransitions
@@ -38,11 +38,11 @@ export class ModelElementBuilder {
     }
 
     public fromPlace(place: Place): ModelElement {
-        if (!place.$cstNode) throw new Error("No location."); 
+        if (!place.$cstNode) throw new Error("No location.");
 
         return {
             id: this.registry.getOrCreateASTId(place),
-            type: place.$type,
+            types: [place.$type],
             children: {},
             refs: {},
             attributes: {
@@ -55,7 +55,7 @@ export class ModelElementBuilder {
     }
 
     public fromTransition(transition: Transition): ModelElement {
-        if (!transition.$cstNode) throw new Error("No location."); 
+        if (!transition.$cstNode) throw new Error("No location.");
 
         const sourceEdges: ModelElement[] = [];
         for (const source of transition.sources) {
@@ -69,7 +69,7 @@ export class ModelElementBuilder {
 
         return {
             id: this.registry.getOrCreateASTId(transition),
-            type: transition.$type,
+            types: [transition.$type],
             children: {
                 sources: sourceEdges,
                 destinations: destinationEdges
@@ -85,7 +85,7 @@ export class ModelElementBuilder {
     public fromEdge(edge: Edge): ModelElement {
         return {
             id: this.registry.getOrCreateASTId(edge),
-            type: edge.$type,
+            types: [edge.$type],
             children: {},
             refs: {
                 place: this.registry.getOrCreateASTId(this.getReferenceTarget(edge.place))
@@ -109,7 +109,7 @@ export class ModelElementBuilder {
 
         return {
             id: this.registry.getOrCreateRuntimeId(petriNetState),
-            type: 'PetriNetState',
+            types: ['PetriNetState'],
             children: {
                 placesState: places,
                 transitionsState: transitions
@@ -126,7 +126,7 @@ export class ModelElementBuilder {
     public fromTransitionState(transitionState: TransitionState): ModelElement {
         return {
             id: this.registry.getOrCreateRuntimeId(transitionState),
-            type: 'TransitionState',
+            types: ['TransitionState'],
             children: {},
             refs: {
                 transition: this.registry.getOrCreateASTId(transitionState.transition)
@@ -143,7 +143,7 @@ export class ModelElementBuilder {
 
         return {
             id: this.registry.getOrCreateRuntimeId(placeState),
-            type: 'PlaceState',
+            types: ['PlaceState'],
             children: {
                 tokens: tokens
             },
@@ -159,7 +159,7 @@ export class ModelElementBuilder {
 
         return {
             id: this.registry.getOrCreateRuntimeId(token),
-            type: 'TokenState',
+            types: ['TokenState'],
             children: {},
             refs: source ?
                 {
