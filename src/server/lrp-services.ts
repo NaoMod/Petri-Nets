@@ -186,11 +186,9 @@ export class PetriNetsLRPServices {
             throw new Error('The runtime state of this file is undefined.');
 
         const availableSteps: Step[] = [...petrinetState.computeAvailableStep().values()];
-        const parentStep: Step | undefined = availableSteps.length > 0 ? availableSteps[0].parentStep : undefined;
 
         return {
-            availableSteps: availableSteps.map(s => s.toLRPStep()),
-            parentStepId: parentStep !== undefined ? parentStep.id : undefined
+            availableSteps: availableSteps.map(s => s.toLRPStep())
         };
     }
 
