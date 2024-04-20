@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import { AstNode } from "langium";
 
 /**
- * Creates and stores IDs associated to elements fro mthe AST or runtime state.
+ * Creates and stores IDs associated to elements from the AST or runtime state.
  */
 export class IDRegistry {
     private astIds: Map<AstNode, string>;

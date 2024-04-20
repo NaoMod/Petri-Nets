@@ -2,10 +2,11 @@ import { NodeFileSystem } from 'langium/node';
 import { PetriNet } from '../generated/ast';
 import { extractAstNode } from '../parse-util';
 import { createPetriNetServices } from '../petri-net-module';
-import { PetriNetState } from '../runtimeState';
+import { UndefinedASTError, UndefinedRegistryError, UndefinedRuntimeStateError, UndefinedStepError } from './errors';
 import { IDRegistry } from './idRegistry';
 import { BreakpointType, CheckBreakpointArguments, CheckBreakpointResponse, EnterCompositeStepArguments, EnterCompositeStepResponse, ExecuteAtomicStepArguments, ExecuteAtomicStepResponse, GetAvailableStepsArguments, GetAvailableStepsResponse, GetBreakpointTypesResponse, GetRuntimeStateArguments, GetRuntimeStateResponse, GetStepLocationArguments, GetStepLocationResponse, InitializeExecutionArguments, InitializeExecutionResponse, ParseArguments, ParseResponse } from './lrp';
 import { ModelElementBuilder } from './modelElementBuilder';
+import { PetriNetState } from './runtimeState';
 import { Step } from './steps';
 
 // Breakpoint types exposed by the language runtime
@@ -37,9 +38,9 @@ const breakpointTypes: Array<BreakpointType> = [
         ]
     },
     {
-        id: 'transitionTrigger',
-        name: 'Transition Trigger',
-        description: 'Breaks when a transition is about to be triggered',
+        id: 'transitionFired',
+        name: 'Transition Fired',
+        description: 'Breaks when a transition is about to be fired.',
         parameters: [
             {
                 type: 'object',
@@ -56,15 +57,20 @@ const breakpointTypes: Array<BreakpointType> = [
  * Implements LRP services.
  */
 export class PetriNetsLRPServices {
+    /** Map of source files to their associated Petri Net AST. */
     static petrinets: Map<string, PetriNet> = new Map();
+
+    /** Map of source files to their associated Petri Net runtime state. */
     static petrinetStates: Map<string, PetriNetState> = new Map();
+
+    /** Map of source files to their associated registry of IDs for model elements. */
     static registries: Map<string, IDRegistry> = new Map();
 
     /**
      * Parses a file and stores the generated Petri Net.
      * 
-     * @param args
-     * @returns
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
      */
     static async parse(args: ParseArguments): Promise<ParseResponse> {
         this.petrinetStates.delete(args.sourceFile);
@@ -84,17 +90,16 @@ export class PetriNetsLRPServices {
     }
 
     /**
-     * Creates a new runtime for a given source file.
-     * The AST for the given source file must have been previously constructed.
+     * Creates a new runtime state for the given source file and stores it.
+     * The AST for the given source file must have been previously constructed through the {@link parse} service.
      * 
-     * @param args
-     * @returns
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedASTError} If no AST is defined for the source file.
      */
     static initializeExecution(args: InitializeExecutionArguments): InitializeExecutionResponse {
         const petrinet: PetriNet | undefined = this.petrinets.get(args.sourceFile);
-
-        if (petrinet === undefined)
-            throw new Error('The petri net of this file is undefined.');
+        if (petrinet === undefined) throw new UndefinedASTError(args.sourceFile);
 
         this.petrinetStates.set(args.sourceFile, new PetriNetState(petrinet));
 
@@ -102,31 +107,31 @@ export class PetriNetsLRPServices {
     }
 
     /**
-     * Returns the current runtime state for a given source file.
+     * Returns the current runtime state for the given source file.
      * 
-     * @param args
-     * @returns
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedRuntimeStateError} If no runtime state is defined for the source file.
+     * @throws {UndefinedRegistryError} If no registry is defiend for the source file.
      */
     static getRuntimeState(args: GetRuntimeStateArguments): GetRuntimeStateResponse {
-        const petrinetState: PetriNetState | undefined = this.petrinetStates.get(args.sourceFile);
-        if (petrinetState === undefined)
-            throw new Error('The runtime state of this file is undefined.');
+        const runtimeState: PetriNetState | undefined = this.petrinetStates.get(args.sourceFile);
+        if (runtimeState === undefined) throw new UndefinedRuntimeStateError(args.sourceFile);
 
         const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
-        if (registry === undefined)
-            throw new Error('No registry.');
+        if (registry === undefined) throw new UndefinedRegistryError(args.sourceFile);
 
         const builder: ModelElementBuilder = new ModelElementBuilder(registry);
 
         return {
-            runtimeStateRoot: builder.fromPetriNetState(petrinetState)
+            runtimeStateRoot: builder.fromPetriNetState(runtimeState)
         };
     }
 
     /**
-     * Retrieves the breakpoint types exposed by the language runtime.
+     * Returns the available breakpoint types.
      * 
-     * @returns 
+     * @returns The LRP response to the request.
      */
     static getBreakpointTypes(): GetBreakpointTypesResponse {
         return {
@@ -135,74 +140,101 @@ export class PetriNetsLRPServices {
     }
 
     /**
-     * Checks whether a breakpoint is activated.
+     * Checks whether a breakpoint of a certain type is verified with the given arguments,
+     * in the runtime state associated to the given source file.
      * 
-     * @param args 
-     * @returns
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedRuntimeStateError} If no runtime state is defined for the source file.
+     * @throws {UndefinedRegistryError} If no registry is defiend for the source file.
      */
     static checkBreakpoint(args: CheckBreakpointArguments): CheckBreakpointResponse {
         const runtimeState: PetriNetState | undefined = this.petrinetStates.get(args.sourceFile);
-        if (runtimeState === undefined)
-            throw new Error('The runtime state of this file has not been initialized yet.');
+        if (runtimeState === undefined) throw new UndefinedRuntimeStateError(args.sourceFile);
 
         const registry: IDRegistry | undefined = this.registries.get(args.sourceFile);
-        if (registry === undefined)
-            throw new Error('No registry.');
+        if (registry === undefined) throw new UndefinedRegistryError(args.sourceFile);
 
-        return runtimeState.checkBreakpoint(args.typeId, args.stepId, args.bindings, registry);
+        const message: string | undefined = runtimeState.checkBreakpoint(args.typeId, args.stepId, args.bindings, registry);
+        if (message === undefined) {
+            return { isActivated: false };
+        }
+
+        return {
+            isActivated: true,
+            message: message
+        }
     }
 
+    /**
+     * Enters a composite step in the runtime state associated to the given source file.
+     * The possible steps are exposed by the language runtime through the {@link getAvailableSteps} service.
+     * 
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedRuntimeStateError} If no runtime state is defined for the source file.
+     */
     static enterCompositeStep(args: EnterCompositeStepArguments): EnterCompositeStepResponse {
-        const petrinetState = this.petrinetStates.get(args.sourceFile);
-        if (petrinetState === undefined)
-            throw new Error('The runtime state of this file is undefined.');
+        const runtimeState = this.petrinetStates.get(args.sourceFile);
+        if (runtimeState === undefined) throw new UndefinedRuntimeStateError(args.sourceFile);
 
-        petrinetState.enterCompositeStep(args.stepId);
+        runtimeState.enterCompositeStep(args.stepId);
 
         return {};
     }
 
     /**
-     * Performs a next step action in the runtime associated to a given source file.
+     * Performs a single atomic step in the runtime state associated to the given source file.
+     * The possible steps are exposed by the language runtime through the {@link getAvailableSteps} service.
      * 
-     * @param args 
-     * @returns 
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedRuntimeStateError} If no runtime state is defined for the source file.
      */
     static executeAtomicStep(args: ExecuteAtomicStepArguments): ExecuteAtomicStepResponse {
-        const petrinetState = this.petrinetStates.get(args.sourceFile);
-        if (petrinetState === undefined)
-            throw new Error('The runtime state of this file is undefined.');
+        const runtimeState = this.petrinetStates.get(args.sourceFile);
+        if (runtimeState === undefined) throw new UndefinedRuntimeStateError(args.sourceFile);
 
-        const executedStep: Step = petrinetState.executeAtomicStep(args.stepId);
+        const executedStep: Step = runtimeState.executeAtomicStep(args.stepId);
 
         return {
-            completedSteps: executedStep.getCompletedSteps().map(s => s.id)
+            completedSteps: executedStep.completedSteps.map(s => s.id)
         };
     }
 
+    /**
+     * Returns the currently available steps.
+     * 
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedRuntimeStateError} If no runtime state is defined for the source file.
+     */
     static getAvailableSteps(args: GetAvailableStepsArguments): GetAvailableStepsResponse {
-        const petrinetState = this.petrinetStates.get(args.sourceFile);
-        if (petrinetState === undefined)
-            throw new Error('The runtime state of this file is undefined.');
+        const runtimeState = this.petrinetStates.get(args.sourceFile);
+        if (runtimeState === undefined) throw new UndefinedRuntimeStateError(args.sourceFile);
 
-        const availableSteps: Step[] = [...petrinetState.computeAvailableStep().values()];
+        const availableSteps: Step[] = [...runtimeState.availableSteps.values()];
 
         return {
             availableSteps: availableSteps.map(s => s.toLRPStep())
         };
     }
 
+    /**
+     * Returns the location of a step in the runtime state associated to the given source file.
+     * The possible steps are exposed by the language runtime through the {@link getAvailableSteps} service.
+     * 
+     * @param args Arguments of the request.
+     * @returns The LRP response to the request.
+     * @throws {UndefinedRuntimeStateError} If no runtime state is defined for the source file.
+     * @throws {UndefinedStepError} If no step is defined for the step ID.
+     */
     static getStepLocation(args: GetStepLocationArguments): GetStepLocationResponse {
-        const petrinetState = this.petrinetStates.get(args.sourceFile);
-        if (petrinetState === undefined)
-            throw new Error('The runtime state of this file is undefined.');
+        const runtimeState = this.petrinetStates.get(args.sourceFile);
+        if (runtimeState === undefined) throw new UndefinedRuntimeStateError(args.sourceFile);
 
-        if (petrinetState.availableSteps === undefined)
-            throw new Error('No step to compute from.');
-
-        const step: Step | undefined = petrinetState.availableSteps.get(args.stepId);
-        if (step === undefined)
-            throw new Error(`No step with id ${args.stepId}.`);
+        const step: Step | undefined = runtimeState.availableSteps.get(args.stepId);
+        if (step === undefined) throw new UndefinedStepError(args.stepId);
 
         return {
             location: step.location

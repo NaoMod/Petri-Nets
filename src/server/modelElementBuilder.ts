@@ -1,9 +1,10 @@
 import { AstNode, Reference } from "langium";
 import { Edge, PetriNet, Place, Transition } from "src/generated/ast";
-import { PetriNetState, PlaceState, TokenState, TransitionState } from "src/runtimeState";
+import { UndefinedReferenceError } from "./errors";
 import { IDRegistry } from "./idRegistry";
 import { AstNodeLocator } from "./locator";
 import { ModelElement } from "./lrp";
+import { PetriNetState, PlaceState, TokenState, TransitionState } from "./runtimeState";
 
 /**
  * Builds model elements that can be communicated through LRP from elements of
@@ -170,9 +171,15 @@ export class ModelElementBuilder {
         };
     }
 
+    /**
+     * Resolves a reference contained by an AST node.
+     * @param ref Reference to resolve.
+     * @returns The node targeted by the reference.
+     * @throws {UndefinedReferenceError} If the reference is not defined.
+     */
     private getReferenceTarget<T extends AstNode>(ref: Reference<T>): T {
         const target: T | undefined = ref.ref;
-        if (!target) throw new Error('Undefined reference.');
+        if (!target) throw new UndefinedReferenceError(ref);
 
         return target;
     }

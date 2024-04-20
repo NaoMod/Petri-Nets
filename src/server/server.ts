@@ -5,6 +5,7 @@ import { PetriNetsLRPServices } from './lrp-services';
  * TCP server running at a given port and providing LRP services.
  */
 export class LRPServer {
+    /** TCP server. */
     private server: Server;
 
     constructor() {
@@ -39,9 +40,12 @@ export class LRPServer {
         });
     }
 
-    public start(port?: number): void {
-        if (!port)
-            this.server.tcp().listen(49152, 'localhost');
+    /**
+     * Starts the server at a given port on localhost.
+     * 
+     * @param port Port on which the server should listen.
+     */
+    public start(port: number): void {
         this.server.tcp().listen(port, 'localhost');
     }
 }

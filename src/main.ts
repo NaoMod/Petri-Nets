@@ -1,6 +1,6 @@
 import path from 'path';
-import { LRPServer } from './server/server';
 import { generatePetriNetFile } from './petrinet-generator';
+import { LRPServer } from './server/server';
 
 
 export default async function main() {

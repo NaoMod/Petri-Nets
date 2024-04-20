@@ -1,7 +1,16 @@
 import { AstNode } from "langium";
 import { Location } from "./lrp";
 
+/**
+ * Handles the retrieval of information about the location of AST elements.
+ */
 export class AstNodeLocator {
+    /**
+     * Retrieves the location of an AST element.
+     * 
+     * @param node AST node to locate.
+     * @returns The location of the AST node, or undefined if there is none.
+     */
     static getLocation(node: AstNode): Location | undefined {
         if (!node.$cstNode) return undefined;
 
