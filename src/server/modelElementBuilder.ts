@@ -1,6 +1,6 @@
 import { AstNode, Reference } from "langium";
 import { Edge, PetriNet, Place, Transition } from "src/generated/ast";
-import { UndefinedReferenceError } from "./errors";
+import { UndefinedLocationError, UndefinedReferenceError } from "./errors";
 import { IDRegistry } from "./idRegistry";
 import { AstNodeLocator } from "./locator";
 import { ModelElement } from "./lrp";
@@ -39,7 +39,7 @@ export class ModelElementBuilder {
     }
 
     public fromPlace(place: Place): ModelElement {
-        if (!place.$cstNode) throw new Error("No location.");
+        if (!place.$cstNode) throw new UndefinedLocationError(place);
 
         return {
             id: this.registry.getOrCreateASTId(place),
@@ -56,7 +56,7 @@ export class ModelElementBuilder {
     }
 
     public fromTransition(transition: Transition): ModelElement {
-        if (!transition.$cstNode) throw new Error("No location.");
+        if (!transition.$cstNode) throw new UndefinedLocationError(transition);
 
         const sourceEdges: ModelElement[] = [];
         for (const source of transition.sources) {

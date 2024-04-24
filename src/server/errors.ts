@@ -36,7 +36,7 @@ export class UndefinedBreakpointTypeError extends UndefinedElementError<string> 
     }
 }
 
-export class UndefinedReferenceError<T extends AstNode> extends UndefinedElementError<Reference<T>>{
+export class UndefinedReferenceError<T extends AstNode> extends UndefinedElementError<Reference<T>> {
     constructor(ref: Reference<T>) {
         super('UndefinedReferenceError', `Undefined reference for '${ref.$refText}'.`, ref);
     }
@@ -57,5 +57,11 @@ export class StepNotAtomicError implements Error {
         this.name = 'StepNotAtomicError';
         this.message = `Step '${step.name}' is not atomic.`
         this.step = step;
+    }
+}
+
+export class UndefinedLocationError<T extends AstNode> extends UndefinedElementError<T> {
+    constructor(element: T) {
+        super('UndefinedLocationError', `Undefined location for element of type ${element.$type}'.`, element);
     }
 }
